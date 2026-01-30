@@ -1,0 +1,5 @@
+{
+  "name": "Saka Delivery KDS",
+  "description": "A dark-mode Kitchen Display System (KDS) for delivery management with role-based authentication and real-time order tracking.",
+  "requestFramePermissions": []
+}
