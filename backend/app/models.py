@@ -107,3 +107,24 @@ class WebhookEvent(Base):
     error_message = Column(Text, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UserRole(str, enum.Enum):
+    """Papel do usuário no sistema."""
+    ADMIN = "ADMIN"
+    KITCHEN = "KITCHEN"
+
+
+class User(Base):
+    """Modelo de usuário do sistema."""
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    full_name = Column(String, nullable=False)
+    password_hash = Column(String, nullable=False)
+    role = Column(String, default=UserRole.KITCHEN.value)
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_login = Column(DateTime, nullable=True)

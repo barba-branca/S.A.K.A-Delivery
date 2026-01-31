@@ -9,6 +9,8 @@ Backend FastAPI para integração com iFood via Webhook.
 - ✅ **Banco de Dados** - SQLite para persistência de pedidos
 - ✅ **API REST** - Endpoints para o frontend KDS consumir
 - ✅ **CORS** - Configurado para o frontend
+- ✅ **Autenticação** - Sistema de login e registro de usuários
+- ✅ **Reset Diário** - Limpa pedidos automaticamente a cada dia
 
 ## 📋 Requisitos
 
@@ -68,14 +70,31 @@ O servidor estará disponível em: http://localhost:8000
 ### Pedidos (API REST)
 - `GET /orders` - Lista todos os pedidos
 - `GET /orders/{id}` - Busca pedido por ID
+- `GET /orders/stats` - Estatísticas de pedidos por status
 - `PATCH /orders/{id}/status` - Atualiza status do pedido
 - `POST /orders/drivers/{name}/pay` - Marca motorista como pago
+- `DELETE /orders/{id}` - Exclui um pedido específico
+- `DELETE /orders` - Remove todos os pedidos (reset)
+- `POST /orders/daily-reset` - Verifica e executa reset diário
+
+### Autenticação
+- `POST /auth/login` - Login de usuário
+- `POST /auth/register` - Registro de novo usuário
+- `GET /auth/users` - Lista todos os usuários
+- `DELETE /auth/users/{id}` - Exclui um usuário
 
 ### Utilitários
 - `GET /` - Informações da API
 - `GET /health` - Health check
 - `GET /docs` - Documentação Swagger
 - `GET /redoc` - Documentação ReDoc
+
+## 👤 Credenciais Padrão
+
+| Usuário | Senha | Função |
+|---------|-------|--------|
+| admin | admin123 | ADMIN |
+| cozinha | 123 | KITCHEN |
 
 ## 🔐 Segurança
 
@@ -100,14 +119,16 @@ backend/
 │   ├── main.py           # Aplicação FastAPI
 │   ├── config.py         # Configurações
 │   ├── database.py       # Configuração SQLite
-│   ├── models.py         # Modelos SQLAlchemy
+│   ├── models.py         # Modelos SQLAlchemy (Order, User, etc)
 │   ├── schemas.py        # Schemas Pydantic
 │   ├── security.py       # Validação HMAC
 │   ├── routers/
 │   │   ├── webhook.py    # Endpoint /webhook
-│   │   └── orders.py     # Endpoints /orders
+│   │   ├── orders.py     # Endpoints /orders
+│   │   └── auth.py       # Endpoints /auth (login/registro)
 │   └── services/
 │       ├── order_service.py    # Lógica de pedidos
+│       ├── user_service.py     # Lógica de usuários
 │       └── webhook_service.py  # Processamento de eventos
 ├── tests/
 ├── requirements.txt

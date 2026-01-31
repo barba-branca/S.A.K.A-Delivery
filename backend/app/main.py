@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from .config import get_settings
 from .database import init_db
-from .routers import webhook, orders
+from .routers import webhook, orders, auth
 
 # Configuração de logging
 logging.basicConfig(
@@ -91,6 +91,7 @@ app.add_middleware(
 # Registra os routers
 app.include_router(webhook.router)
 app.include_router(orders.router)
+app.include_router(auth.router)
 
 
 @app.get("/", tags=["Health"])

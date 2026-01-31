@@ -273,3 +273,89 @@ def mark_driver_as_paid(db: Session, driver_name: str) -> List[Order]:
     
     logger.info(f"Marcados {len(orders)} pedidos como pagos para o motorista: {driver_name}")
     return orders
+
+
+def delete_order(db: Session, order_id: str) -> bool:
+    """
+    Exclui um pedido do banco de dados.
+    
+    Args:
+        db: Sessão do banco de dados
+        order_id: ID do pedido a ser excluído
+    
+    Returns:
+        True se excluído com sucesso, False se não encontrado
+    """
+    order = get_order_by_id(db, order_id)
+    if not order:
+        return False
+    
+    db.delete(order)
+    db.commit()
+    
+    logger.info(f"Pedido {order_id} excluído com sucesso")
+    return True
+
+
+def reset_all_orders(db: Session) -> int:
+    """
+    Remove todos os pedidos do banco de dados (reset diário).
+    
+    Args:
+        db: Sessão do banco de dados
+    
+    Returns:
+        Quantidade de pedidos removidos
+    """
+    count = db.query(Order).count()
+    db.query(OrderItem).delete()
+    db.query(Order).delete()
+    db.commit()
+    
+    logger.info(f"Reset executado: {count} pedidos removidos")
+    return count
+
+
+def check_and_perform_daily_reset(db: Session, last_reset_date: Optional[str] = None) -> tuple[bool, str]:
+    """
+    Verifica se deve realizar o reset diário e executa se necessário.
+    
+    Args:
+        db: Sessão do banco de dados
+        last_reset_date: Data do último reset (formato YYYY-MM-DD)
+    
+    Returns:
+        Tupla (reset_realizado, nova_data)
+    """
+    from datetime import date
+    today = date.today().isoformat()
+    
+    if last_reset_date != today:
+        reset_all_orders(db)
+        logger.info(f"Reset diário realizado: {today}")
+        return True, today
+    
+    return False, today
+
+
+def get_orders_count(db: Session) -> dict:
+    """
+    Retorna estatísticas dos pedidos.
+    
+    Args:
+        db: Sessão do banco de dados
+    
+    Returns:
+        Dicionário com contagens por status
+    """
+    total = db.query(Order).count()
+    by_status = {}
+    
+    for status in DBOrderStatus:
+        count = db.query(Order).filter(Order.status == status.value).count()
+        by_status[status.value] = count
+    
+    return {
+        "total": total,
+        "byStatus": by_status
+    }

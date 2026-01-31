@@ -174,3 +174,100 @@ async def pay_driver(
         "message": f"Motorista {driver_name} marcado como pago",
         "ordersUpdated": len(orders)
     }
+
+
+@router.delete(
+    "/{order_id}",
+    summary="Exclui um pedido",
+    description="Remove um pedido específico do sistema"
+)
+async def delete_order(
+    order_id: str,
+    db: Session = Depends(get_db)
+) -> dict:
+    """
+    Exclui um pedido pelo ID.
+    
+    Args:
+        order_id: ID do pedido
+    
+    Returns:
+        Confirmação de exclusão
+    
+    Raises:
+        404: Se pedido não encontrado
+    """
+    success = order_service.delete_order(db, order_id)
+    
+    if not success:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    
+    return {
+        "message": "Pedido excluído com sucesso",
+        "orderId": order_id
+    }
+
+
+@router.delete(
+    "",
+    summary="Limpa todos os pedidos",
+    description="Remove todos os pedidos do sistema (reset diário)"
+)
+async def reset_orders(
+    db: Session = Depends(get_db)
+) -> dict:
+    """
+    Remove todos os pedidos (reset).
+    
+    Returns:
+        Quantidade de pedidos removidos
+    """
+    count = order_service.reset_all_orders(db)
+    
+    return {
+        "message": "Todos os pedidos foram removidos",
+        "ordersRemoved": count
+    }
+
+
+@router.get(
+    "/stats",
+    summary="Estatísticas dos pedidos",
+    description="Retorna contagem de pedidos por status"
+)
+async def get_stats(
+    db: Session = Depends(get_db)
+) -> dict:
+    """
+    Retorna estatísticas dos pedidos.
+    
+    Returns:
+        Contagem total e por status
+    """
+    return order_service.get_orders_count(db)
+
+
+@router.post(
+    "/daily-reset",
+    summary="Verificação de reset diário",
+    description="Verifica e realiza reset diário se necessário"
+)
+async def check_daily_reset(
+    last_reset_date: Optional[str] = None,
+    db: Session = Depends(get_db)
+) -> dict:
+    """
+    Verifica se deve realizar o reset diário.
+    
+    Args:
+        last_reset_date: Data do último reset (formato YYYY-MM-DD)
+    
+    Returns:
+        Se o reset foi realizado e a data atual
+    """
+    reset_performed, current_date = order_service.check_and_perform_daily_reset(db, last_reset_date)
+    
+    return {
+        "resetPerformed": reset_performed,
+        "currentDate": current_date
+    }

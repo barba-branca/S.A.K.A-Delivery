@@ -145,3 +145,46 @@ class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None
     status_code: int
+
+
+# ============== User Schemas ==============
+
+class UserRole(str, Enum):
+    """Papel do usuário no sistema."""
+    ADMIN = "ADMIN"
+    KITCHEN = "KITCHEN"
+
+
+class UserRegister(BaseModel):
+    """Schema para registro de usuário."""
+    username: str = Field(..., min_length=3, max_length=50)
+    full_name: str = Field(..., min_length=2, max_length=100)
+    password: str = Field(..., min_length=3)
+    role: UserRole = UserRole.KITCHEN
+
+
+class UserLogin(BaseModel):
+    """Schema para login de usuário."""
+    username: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    """Schema de resposta para usuário."""
+    id: int
+    username: str
+    fullName: str = Field(alias="full_name")
+    role: str
+    isActive: bool = Field(alias="is_active")
+    createdAt: datetime = Field(alias="created_at")
+    
+    class Config:
+        from_attributes = True
+        populate_by_name = True
+
+
+class LoginResponse(BaseModel):
+    """Schema de resposta para login."""
+    message: str
+    user: UserResponse
+    token: Optional[str] = None
