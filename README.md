@@ -1,209 +1,260 @@
-# S.A.K.A Delivery – SaaS de Gestão de Delivery
+<p align="center">
+  <img src="https://img.shields.io/badge/S.A.K.A-Delivery-blueviolet?style=for-the-badge&logo=uber&logoColor=white" alt="SAKA Delivery" />
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black" alt="React" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+</p>
+
+<h1 align="center">🛵 S.A.K.A Delivery</h1>
 
 <p align="center">
-  <strong>Sistema de gestão de delivery com pacotes pré-pagos, KDS (Kitchen Display System) e integração iFood.</strong>
+  <strong>Plataforma SaaS de gestão de delivery com pacotes pré-pagos, KDS e integração iFood.</strong>
+</p>
+
+<p align="center">
+  <a href="#-features">Features</a> •
+  <a href="#-tech-stack">Tech Stack</a> •
+  <a href="#-como-rodar">Como Rodar</a> •
+  <a href="#-api-endpoints">API</a> •
+  <a href="#-arquitetura">Arquitetura</a> •
+  <a href="#-deploy">Deploy</a>
 </p>
 
 ---
-
-## 🏗️ Arquitetura
-
-```
-saka-delivery-kds/
-├── App.tsx                    # App principal (React Router)
-├── index.html                 # Entry point HTML
-├── index.tsx                  # React root
-├── package.json               # Deps frontend
-├── vite.config.ts             # Vite config
-├── vitest.config.ts           # Vitest config
-├── types.ts                   # Types TypeScript (KDS)
-├── components/                # Componentes KDS existentes
-│   ├── KanbanBoard.tsx        # Board Kanban drag-and-drop
-│   ├── OrderCard.tsx          # Card de pedido
-│   ├── Login.tsx              # Login legacy (mantido)
-│   ├── DriverPayouts.tsx      # Repasse motoristas
-│   └── Timer.tsx              # Timer de preparação
-├── services/
-│   └── mockDb.ts              # Mock DB (KDS local)
-├── src/
-│   ├── contexts/
-│   │   └── AuthContext.tsx     # Context de autenticação JWT
-│   ├── services/
-│   │   └── api.ts             # Axios + JWT interceptor
-│   ├── pages/
-│   │   ├── LoginPage.tsx      # Login/Register (conectado ao backend)
-│   │   ├── DashboardPage.tsx  # Dashboard com saldo, gráficos
-│   │   ├── PedidosPage.tsx    # Tabela de pedidos SaaS
-│   │   └── KDSPage.tsx        # Tela KDS (Kanban)
-│   └── components/
-│       └── Sidebar.tsx        # Sidebar de navegação
-└── backend/
-    ├── app/
-    │   ├── main.py            # FastAPI app
-    │   ├── config.py          # Settings (pydantic-settings)
-    │   ├── database.py        # Async PostgreSQL engine
-    │   ├── models.py          # SQLAlchemy models
-    │   ├── schemas.py         # Pydantic schemas
-    │   ├── security.py        # JWT + bcrypt + iFood HMAC
-    │   ├── routers/
-    │   │   ├── auth.py        # /auth (login, register, me)
-    │   │   ├── orders.py      # /orders (KDS CRUD)
-    │   │   ├── webhook.py     # /webhook (iFood webhook)
-    │   │   ├── pacotes.py     # /pacotes (compra de pacotes)
-    │   │   ├── pedidos_saas.py# /pedidos (pedidos SaaS)
-    │   │   ├── repasse.py     # /repasse (relatório financeiro)
-    │   │   └── webhook_pagamento.py # /webhook/pagamento (OpenPix stub)
-    │   └── services/
-    │       ├── user_service.py
-    │       ├── order_service.py
-    │       ├── webhook_service.py
-    │       ├── pacote_service.py
-    │       ├── pedido_saas_service.py
-    │       └── repasse_service.py
-    ├── alembic/               # Migrações de banco
-    │   ├── env.py
-    │   └── versions/
-    ├── tests/
-    │   ├── conftest.py        # Fixtures (SQLite in-memory)
-    │   ├── test_auth.py       # 5 testes de autenticação
-    │   ├── test_credito.py    # 4 testes de crédito
-    │   ├── test_repasse.py    # 3 testes de repasse
-    │   └── test_webhook.py    # 3 testes de webhook
-    └── requirements.txt
-```
 
 ## ✨ Features
 
 | Feature | Status | Descrição |
 |---------|--------|-----------|
-| **Autenticação JWT** | ✅ | Register/Login com tokens Bearer |
-| **Pacotes Pré-pagos** | ✅ | Compra de créditos (R$5.000 / 1.000 pedidos) |
-| **Dedução de Crédito** | ✅ | R$5.00 por pedido, verificação de saldo |
-| **Repasse Arnaldo** | ✅ | 30% (R$1.50) para pedidos via_arnaldo |
-| **Relatório Mensal** | ✅ | SUM de repasses pendentes/pagos |
-| **Dashboard SaaS** | ✅ | Saldo, pedidos restantes, gráficos |
-| **KDS (Kanban)** | ✅ | Board drag-and-drop de pedidos |
-| **Webhook iFood** | ✅ | Recebimento de eventos com HMAC |
-| **Webhook Pagamento** | 🔜 | Stub para OpenPix (pronto para integrar) |
+| 🔐 **Autenticação JWT** | ✅ | Register/Login com tokens Bearer + bcrypt |
+| 💰 **Pacotes Pré-pagos** | ✅ | Compra de créditos (R$5.000 / 1.000 pedidos) |
+| 🧾 **Dedução de Crédito** | ✅ | R$5.00 por pedido com verificação de saldo |
+| 💸 **Repasse Financeiro** | ✅ | 30% (R$1.50) para pedidos `via_arnaldo` |
+| 📊 **Relatório Mensal** | ✅ | SUM de repasses pendentes / pagos |
+| 🏠 **Dashboard SaaS** | ✅ | Saldo, pedidos restantes, gráficos Chart.js |
+| 📋 **KDS Kanban** | ✅ | Board drag‑and‑drop conectado ao backend |
+| 🔔 **Webhook iFood** | ✅ | Eventos com validação HMAC SHA256 |
+| 💳 **Webhook Pagamento** | 🔜 | Stub OpenPix (pronto para integrar) |
+
+---
+
+## 🛠 Tech Stack
+
+### Backend
+- **FastAPI** — Framework async de alta performance
+- **PostgreSQL** + **asyncpg** — Banco relacional async
+- **SQLAlchemy 2.0** — ORM com suporte async
+- **Alembic** — Migrações de banco de dados
+- **JWT** (python-jose) + **bcrypt** (passlib) — Autenticação
+- **Pydantic v2** — Validação de dados com Settings
+
+### Frontend
+- **React 19** + **TypeScript** — SPA tipada
+- **Vite** — Build tool ultrarrápido
+- **React Router v7** — Navegação SPA
+- **Axios** — HTTP client com JWT interceptor
+- **Chart.js** — Gráficos de uso mensal
+- **Tailwind CSS** (CDN) — Styling utilitário
+- **Lucide React** — Ícones modernos
+
+### Testes
+- **pytest** + **pytest-asyncio** — Backend (15 testes)
+- **vitest** + **jsdom** — Frontend
+
+---
 
 ## 🚀 Como Rodar
 
 ### Pré-requisitos
 
-- **Python 3.11+**
-- **Node.js 18+**
-- **PostgreSQL 15+** (com um banco chamado `saka_delivery`)
+| Ferramenta | Versão |
+|------------|--------|
+| Python | 3.11+ |
+| Node.js | 18+ |
+| PostgreSQL | 15+ |
 
-### Backend
+### 1️⃣ Banco de Dados
+
+```sql
+-- No pgAdmin ou psql:
+CREATE DATABASE saka_delivery;
+```
+
+### 2️⃣ Backend
 
 ```bash
-# 1. Entrar na pasta do backend
 cd backend
 
-# 2. Criar e ativar ambiente virtual
+# Ambiente virtual
 python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux/Mac
 
-# 3. Instalar dependências
+# Dependências
 pip install -r requirements.txt
 
-# 4. Criar banco PostgreSQL
-# psql -U postgres -c "CREATE DATABASE saka_delivery;"
+# Configurar ambiente
+copy .env.example .env         # ajuste DATABASE_URL se necessário
 
-# 5. Configurar .env (copiar .env.example e ajustar)
-copy .env.example .env
+# Migrações
+python -m alembic upgrade head
 
-# 6. Rodar migrações
-alembic upgrade head
-
-# 7. Iniciar servidor
+# Iniciar servidor
 python run.py
 # → http://localhost:8000/docs
 ```
 
-### Frontend
+### 3️⃣ Frontend
 
 ```bash
-# 1. Na raiz do projeto
+# Na raiz do projeto
 npm install
-
-# 2. Iniciar dev server
 npm run dev
-# → http://localhost:3000
+# → http://localhost:5173
 ```
 
-### Testes
+### 4️⃣ Testes
 
 ```bash
 # Backend
 cd backend
-pip install aiosqlite  # necessário para testes
 pytest tests/ -v
 
 # Frontend
 npm test
 ```
 
-## 🔧 Variáveis de Ambiente (.env)
-
-```env
-# Database
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/saka_delivery
-
-# JWT
-JWT_SECRET=your-secret-key-here
-JWT_EXPIRE_MINUTES=1440
-
-# iFood
-IFOOD_CLIENT_ID=your_client_id
-IFOOD_CLIENT_SECRET=your_client_secret
-
-# Server
-HOST=0.0.0.0
-PORT=8000
-DEBUG=true
-FRONTEND_URL=http://localhost:5173
-
-# Gemini AI
-GEMINI_API_KEY=your_api_key
-```
+---
 
 ## 📡 API Endpoints
 
-| Método | Endpoint | Auth | Descrição |
-|--------|----------|------|-----------|
-| POST | `/auth/register` | ❌ | Registrar usuário |
-| POST | `/auth/login` | ❌ | Login (retorna JWT) |
-| GET | `/auth/me` | ✅ | Dados do usuário logado |
-| POST | `/pacotes/comprar` | ✅ | Comprar pacote de créditos |
-| GET | `/pacotes` | ✅ | Listar pacotes do usuário |
-| POST | `/pedidos` | ✅ | Criar pedido (deduz R$5) |
-| GET | `/pedidos` | ✅ | Listar pedidos SaaS |
-| GET | `/repasse/mensal` | ✅ | Relatório mensal |
-| POST | `/repasse/pagar` | ✅ | Marcar repasses como pagos |
-| GET | `/orders` | ❌ | Pedidos KDS |
-| POST | `/webhook` | ❌ | Webhook iFood |
-| POST | `/webhook/pagamento` | ❌ | Webhook Pagamento (stub) |
+> Documentação interativa em **http://localhost:8000/docs**
+
+### Autenticação
+| Método | Rota | Auth | Descrição |
+|--------|------|:----:|-----------|
+| `POST` | `/auth/register` | ❌ | Criar conta |
+| `POST` | `/auth/login` | ❌ | Login → JWT |
+| `GET` | `/auth/me` | 🔒 | Dados do usuário logado |
+
+### Pacotes & Crédito
+| Método | Rota | Auth | Descrição |
+|--------|------|:----:|-----------|
+| `POST` | `/pacotes/comprar` | 🔒 | Comprar pacote (R$5.000) |
+| `GET` | `/pacotes` | 🔒 | Listar pacotes |
+
+### Pedidos SaaS
+| Método | Rota | Auth | Descrição |
+|--------|------|:----:|-----------|
+| `POST` | `/pedidos` | 🔒 | Criar pedido (deduz R$5) |
+| `GET` | `/pedidos` | 🔒 | Listar pedidos |
+
+### Repasse Financeiro
+| Método | Rota | Auth | Descrição |
+|--------|------|:----:|-----------|
+| `GET` | `/repasse/mensal` | 🔒 | Relatório do mês |
+| `POST` | `/repasse/pagar` | 🔒 | Marcar como pago |
+
+### KDS (Kitchen Display)
+| Método | Rota | Auth | Descrição |
+|--------|------|:----:|-----------|
+| `GET` | `/orders` | ❌ | Listar pedidos KDS |
+| `POST` | `/orders/create` | ❌ | Criar pedido KDS |
+| `PATCH` | `/orders/{id}/status` | ❌ | Atualizar status |
+| `POST` | `/orders/drivers/{name}/pay` | ❌ | Pagar motorista |
+
+### Webhooks
+| Método | Rota | Auth | Descrição |
+|--------|------|:----:|-----------|
+| `POST` | `/webhook` | ❌ | Receber evento iFood |
+| `POST` | `/webhook/pagamento` | ❌ | Receber pagamento (stub) |
+
+---
+
+## 🏗 Arquitetura
+
+```
+saka-delivery-kds/
+│
+├── 🎨 Frontend (React + Vite + TS)
+│   ├── App.tsx                    # React Router + layout protegido
+│   ├── src/
+│   │   ├── contexts/AuthContext   # JWT auth provider
+│   │   ├── services/api.ts        # Axios + interceptor
+│   │   ├── pages/
+│   │   │   ├── LoginPage          # Login/Register
+│   │   │   ├── DashboardPage      # Saldo + gráficos
+│   │   │   ├── PedidosPage        # Tabela de pedidos
+│   │   │   └── KDSPage            # Kanban board
+│   │   └── components/Sidebar     # Navegação
+│   └── components/                # KDS: KanbanBoard, OrderCard, Timer
+│
+├── ⚙️ Backend (FastAPI + PostgreSQL)
+│   └── backend/
+│       ├── app/
+│       │   ├── main.py            # App + routers
+│       │   ├── models.py          # User, Pacote, PedidoSaas, Repasse, Order
+│       │   ├── security.py        # JWT + bcrypt + HMAC
+│       │   ├── routers/           # 7 routers (auth, orders, pacotes, etc.)
+│       │   └── services/          # 6 services (business logic)
+│       ├── alembic/               # Migrações
+│       └── tests/                 # 15 testes pytest
+│
+└── 📄 Config
+    ├── .env.example               # Template de variáveis
+    ├── package.json               # Frontend deps
+    └── requirements.txt           # Backend deps
+```
+
+---
+
+## 🔧 Variáveis de Ambiente
+
+Copie `backend/.env.example` → `backend/.env` e ajuste:
+
+| Variável | Exemplo | Descrição |
+|----------|---------|-----------|
+| `DATABASE_URL` | `postgresql+asyncpg://postgres:postgres@localhost:5432/saka_delivery` | Conexão PostgreSQL |
+| `JWT_SECRET` | `sua-chave-secreta` | Segredo para tokens JWT |
+| `JWT_EXPIRE_MINUTES` | `1440` | Tempo de expiração (24h) |
+| `IFOOD_CLIENT_ID` | `...` | Credencial iFood |
+| `IFOOD_CLIENT_SECRET` | `...` | Segredo iFood (webhook HMAC) |
+| `GEMINI_API_KEY` | `...` | Chave da API Gemini |
+
+---
 
 ## 🚢 Deploy
 
-### Backend (Render / Fly.io)
+### Backend → Render / Railway / Fly.io
 
-1. Configure `DATABASE_URL` para o PostgreSQL hospedado
-2. Defina `JWT_SECRET` com uma chave forte
-3. Set `DEBUG=false` em produção
-4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+```bash
+# Start command
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
-### Frontend (Vercel / Netlify)
+# Env vars obrigatórias: DATABASE_URL, JWT_SECRET
+# Set DEBUG=false em produção
+```
 
-1. Build command: `npm run build`
-2. Publish directory: `dist`
-3. Configure API URL no código ou via env
+### Frontend → Vercel / Netlify
 
-## 📝 Credenciais Padrão (Demo)
+```bash
+# Build
+npm run build
+# Output: dist/
+```
+
+---
+
+## 👤 Credenciais Demo
 
 | Usuário | Senha | Role |
 |---------|-------|------|
 | `admin` | `admin123` | ADMIN |
 | `cozinha` | `123` | KITCHEN |
+
+---
+
+## 📝 Licença
+
+Projeto privado — **barba-branca** © 2026
