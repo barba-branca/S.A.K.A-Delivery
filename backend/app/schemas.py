@@ -2,13 +2,15 @@
 Schemas Pydantic para validação e serialização de dados.
 """
 from datetime import datetime
-from typing import Optional, List, Any
+from decimal import Decimal
+from typing import Optional, List
 from pydantic import BaseModel, Field
 from enum import Enum
 
 
+# ============== Enums ==============
+
 class OrderStatus(str, Enum):
-    """Status do pedido no KDS."""
     RECEIVED = "RECEIVED"
     PREPARING = "PREPARING"
     READY = "READY"
@@ -17,31 +19,43 @@ class OrderStatus(str, Enum):
 
 
 class OrderSource(str, Enum):
-    """Origem do pedido."""
     IFOOD = "IFOOD"
     WHATSAPP = "WHATSAPP"
     UBER = "UBER"
     FOOD99 = "FOOD99"
 
 
-# ============== Order Item Schemas ==============
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    KITCHEN = "KITCHEN"
+
+
+class PedidoStatusEnum(str, Enum):
+    ATIVO = "ATIVO"
+    CANCELADO = "CANCELADO"
+    FINALIZADO = "FINALIZADO"
+
+
+class RepasseStatusEnum(str, Enum):
+    PENDENTE = "PENDENTE"
+    PAGO = "PAGO"
+
+
+# ============== Order Item Schemas (KDS) ==============
 
 class OrderItemBase(BaseModel):
-    """Schema base para item de pedido."""
     name: str
     quantity: int = 1
     notes: Optional[str] = None
 
 
 class OrderItemCreate(OrderItemBase):
-    """Schema para criação de item."""
     unit_price: float = 0.0
     total_price: float = 0.0
     options: Optional[str] = None
 
 
 class OrderItemResponse(OrderItemBase):
-    """Schema de resposta para item de pedido."""
     id: int
     unit_price: float
     total_price: float
@@ -51,17 +65,15 @@ class OrderItemResponse(OrderItemBase):
         from_attributes = True
 
 
-# ============== Order Schemas ==============
+# ============== Order Schemas (KDS) ==============
 
 class OrderBase(BaseModel):
-    """Schema base para pedido."""
     customer_name: str
     source: OrderSource = OrderSource.IFOOD
     delivery_fee: float = 0.0
 
 
 class OrderCreate(OrderBase):
-    """Schema para criação de pedido."""
     items: List[OrderItemCreate]
     customer_phone: Optional[str] = None
     delivery_address: Optional[str] = None
@@ -70,24 +82,19 @@ class OrderCreate(OrderBase):
 
 
 class OrderUpdate(BaseModel):
-    """Schema para atualização de pedido."""
     status: Optional[OrderStatus] = None
     driver_name: Optional[str] = None
     is_driver_paid: Optional[bool] = None
 
 
 class OrderResponse(BaseModel):
-    """
-    Schema de resposta para pedido.
-    Compatível com o formato esperado pelo frontend KDS.
-    """
     id: str
     displayId: int = Field(alias="display_id")
     customerName: str = Field(alias="customer_name")
     source: str
     status: str
     items: List[OrderItemResponse]
-    createdAt: int  # Timestamp em milissegundos
+    createdAt: int
     preparingAt: Optional[int] = None
     readyAt: Optional[int] = None
     deliveryAt: Optional[int] = None
@@ -103,10 +110,6 @@ class OrderResponse(BaseModel):
 # ============== iFood Webhook Schemas ==============
 
 class IFoodWebhookEvent(BaseModel):
-    """
-    Schema para eventos do webhook do iFood.
-    Baseado na documentação oficial da API iFood.
-    """
     id: str = Field(..., description="ID único do evento")
     code: str = Field(..., description="Código do tipo de evento")
     orderId: Optional[str] = Field(None, description="ID do pedido no iFood")
@@ -119,7 +122,6 @@ class IFoodWebhookEvent(BaseModel):
 
 
 class WebhookEventResponse(BaseModel):
-    """Schema de resposta para evento de webhook."""
     id: int
     event_id: str
     event_code: str
@@ -134,14 +136,12 @@ class WebhookEventResponse(BaseModel):
 # ============== API Response Schemas ==============
 
 class HealthCheckResponse(BaseModel):
-    """Schema para health check."""
     status: str = "healthy"
     timestamp: datetime
     version: str = "1.0.0"
 
 
 class ErrorResponse(BaseModel):
-    """Schema para respostas de erro."""
     error: str
     detail: Optional[str] = None
     status_code: int
@@ -149,32 +149,26 @@ class ErrorResponse(BaseModel):
 
 # ============== User Schemas ==============
 
-class UserRole(str, Enum):
-    """Papel do usuário no sistema."""
-    ADMIN = "ADMIN"
-    KITCHEN = "KITCHEN"
-
-
 class UserRegister(BaseModel):
-    """Schema para registro de usuário."""
     username: str = Field(..., min_length=3, max_length=50)
+    email: Optional[str] = Field(None, max_length=100)
     full_name: str = Field(..., min_length=2, max_length=100)
     password: str = Field(..., min_length=3)
     role: UserRole = UserRole.KITCHEN
 
 
 class UserLogin(BaseModel):
-    """Schema para login de usuário."""
     username: str
     password: str
 
 
 class UserResponse(BaseModel):
-    """Schema de resposta para usuário."""
     id: int
     username: str
+    email: Optional[str] = None
     fullName: str = Field(alias="full_name")
     role: str
+    saldoCredito: float = Field(default=0.0, alias="saldo_credito")
     isActive: bool = Field(alias="is_active")
     createdAt: datetime = Field(alias="created_at")
     
@@ -184,7 +178,75 @@ class UserResponse(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    """Schema de resposta para login."""
     message: str
     user: UserResponse
-    token: Optional[str] = None
+    access_token: str
+    token_type: str = "bearer"
+
+
+# ============== Pacote Schemas (SaaS) ==============
+
+class PacoteComprar(BaseModel):
+    """Schema para compra de pacote."""
+    tipo: str = Field(default="padrao", description="Tipo do pacote: 'padrao' (R$5000/1000 pedidos)")
+
+
+class PacoteResponse(BaseModel):
+    id: int
+    valor_pago: float
+    qtd_pedidos: int
+    data_compra: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+# ============== Pedido SaaS Schemas ==============
+
+class PedidoSaasCreate(BaseModel):
+    """Schema para criação de pedido SaaS."""
+    via_arnaldo: bool = Field(default=False, description="Se o pedido passa pelo Arnaldo (30% repasse)")
+
+
+class PedidoSaasResponse(BaseModel):
+    id: int
+    user_id: int
+    valor_consumido: float
+    via_arnaldo: bool
+    data: datetime
+    status: str
+    
+    class Config:
+        from_attributes = True
+
+
+# ============== Repasse Schemas ==============
+
+class RepasseResponse(BaseModel):
+    id: int
+    pedido_id: int
+    valor_para_arnaldo: float
+    status: str
+    data_repasse: Optional[datetime] = None
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class RepasseMensalResponse(BaseModel):
+    """Resumo mensal de repasses."""
+    total_pendente: float
+    total_pago: float
+    quantidade_pendente: int
+    quantidade_pago: int
+    repasses: List[RepasseResponse]
+
+
+# ============== Webhook Pagamento (OpenPix) ==============
+
+class WebhookPagamentoPayload(BaseModel):
+    """Payload esperado do webhook de pagamento (futuro OpenPix)."""
+    txid: str
+    valor: float
+    user_id: int

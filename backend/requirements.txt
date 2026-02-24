@@ -1,10 +1,39 @@
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-dotenv==1.0.0
-sqlalchemy==2.0.25
-pydantic==2.5.3
-pydantic-settings==2.1.0
-httpx==0.26.0
-aiosqlite==0.19.0
-pytest==7.4.4
-requests==2.31.0
+# Backend Dependencies - S.A.K.A Delivery SaaS MVP
+# Compatible with Python 3.12+
+
+# Core
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-dotenv>=1.0.0
+
+# ORM & Database
+sqlalchemy>=2.0.25
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# HTTP Client
+httpx>=0.26.0
+
+# Testing
+pytest>=7.4.0
+
+# Requests
+requests>=2.31.0
+
+# PostgreSQL (async)
+asyncpg>=0.29.0
+greenlet>=3.0.0
+
+# JWT Authentication
+python-jose[cryptography]>=3.3.0
+
+# Password Hashing
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+
+# Database Migrations
+alembic>=1.13.0
+
+# Async Testing
+pytest-asyncio>=0.23.0
+aiosqlite>=0.19.0

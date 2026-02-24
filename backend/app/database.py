@@ -1,40 +1,45 @@
 """
-Configuração do banco de dados SQLite com SQLAlchemy.
+Configuração do banco de dados PostgreSQL com SQLAlchemy Async.
 """
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase
 from .config import get_settings
 
 settings = get_settings()
 
-# Configuração do engine SQLite
-# check_same_thread=False é necessário para SQLite com FastAPI
-SQLALCHEMY_DATABASE_URL = settings.database_url
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in SQLALCHEMY_DATABASE_URL else {}
+# Engine async para PostgreSQL
+engine = create_async_engine(
+    settings.database_url,
+    echo=settings.debug,
+    pool_pre_ping=True,
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+AsyncSessionLocal = async_sessionmaker(
+    bind=engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
 
-Base = declarative_base()
+
+class Base(DeclarativeBase):
+    """Base declarativa para todos os modelos."""
+    pass
 
 
-def get_db():
+async def get_db():
     """
-    Dependency que fornece uma sessão do banco de dados.
+    Dependency que fornece uma sessão async do banco de dados.
     Garante que a sessão seja fechada após o uso.
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
 
 
-def init_db():
-    """Inicializa o banco de dados criando todas as tabelas."""
+async def init_db():
+    """Inicializa o banco de dados criando todas as tabelas (fallback se Alembic não rodar)."""
     from . import models  # noqa: F401
-    Base.metadata.create_all(bind=engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

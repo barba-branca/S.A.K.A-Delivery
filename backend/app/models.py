@@ -1,14 +1,20 @@
 """
 Modelos do banco de dados SQLAlchemy.
-Define as tabelas para armazenar pedidos do iFood.
+Define tabelas para o KDS (pedidos iFood) e o sistema SaaS (pacotes, créditos, repasse).
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Text, Enum, ForeignKey
+from decimal import Decimal
+from sqlalchemy import (
+    Column, String, Integer, Float, Boolean, DateTime, Text,
+    ForeignKey, Numeric
+)
 from sqlalchemy.orm import relationship
 import enum
 
 from .database import Base
 
+
+# ============== Enums ==============
 
 class OrderStatus(str, enum.Enum):
     """Status do pedido no KDS."""
@@ -27,8 +33,29 @@ class OrderSource(str, enum.Enum):
     FOOD99 = "FOOD99"
 
 
+class UserRole(str, enum.Enum):
+    """Papel do usuário no sistema."""
+    ADMIN = "ADMIN"
+    KITCHEN = "KITCHEN"
+
+
+class PedidoStatus(str, enum.Enum):
+    """Status do pedido SaaS."""
+    ATIVO = "ATIVO"
+    CANCELADO = "CANCELADO"
+    FINALIZADO = "FINALIZADO"
+
+
+class RepasseStatus(str, enum.Enum):
+    """Status do repasse."""
+    PENDENTE = "PENDENTE"
+    PAGO = "PAGO"
+
+
+# ============== KDS Models (Existing) ==============
+
 class Order(Base):
-    """Modelo de pedido."""
+    """Modelo de pedido KDS (iFood/WhatsApp)."""
     __tablename__ = "orders"
     
     id = Column(String, primary_key=True, index=True)
@@ -74,7 +101,7 @@ class Order(Base):
 
 
 class OrderItem(Base):
-    """Modelo de item do pedido."""
+    """Modelo de item do pedido KDS."""
     __tablename__ = "order_items"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -85,7 +112,7 @@ class OrderItem(Base):
     unit_price = Column(Float, default=0.0)
     total_price = Column(Float, default=0.0)
     notes = Column(Text, nullable=True)
-    options = Column(Text, nullable=True)  # JSON string com opções/complementos
+    options = Column(Text, nullable=True)
     
     order = relationship("Order", back_populates="items")
 
@@ -100,7 +127,7 @@ class WebhookEvent(Base):
     order_id = Column(String, nullable=True, index=True)
     merchant_id = Column(String, nullable=True)
     
-    payload = Column(Text, nullable=False)  # JSON completo do evento
+    payload = Column(Text, nullable=False)
     
     processed = Column(Boolean, default=False)
     processed_at = Column(DateTime, nullable=True)
@@ -109,11 +136,7 @@ class WebhookEvent(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-class UserRole(str, enum.Enum):
-    """Papel do usuário no sistema."""
-    ADMIN = "ADMIN"
-    KITCHEN = "KITCHEN"
-
+# ============== SaaS Models (New) ==============
 
 class User(Base):
     """Modelo de usuário do sistema."""
@@ -121,10 +144,63 @@ class User(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String, unique=True, nullable=False, index=True)
+    email = Column(String, unique=True, nullable=True, index=True)
     full_name = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, default=UserRole.KITCHEN.value)
     
+    # Saldo de crédito pré-pago (em reais)
+    saldo_credito = Column(Numeric(10, 2), default=Decimal("0.00"))
+    
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login = Column(DateTime, nullable=True)
+    
+    # Relacionamentos
+    pacotes = relationship("Pacote", back_populates="user", cascade="all, delete-orphan")
+    pedidos_saas = relationship("PedidoSaas", back_populates="user", cascade="all, delete-orphan")
+
+
+class Pacote(Base):
+    """Pacote pré-pago comprado pelo usuário."""
+    __tablename__ = "pacotes"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    valor_pago = Column(Numeric(10, 2), nullable=False)
+    qtd_pedidos = Column(Integer, nullable=False)  # quantidade de pedidos que o pacote permite
+    data_compra = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="pacotes")
+
+
+class PedidoSaas(Base):
+    """Pedido consumido no sistema SaaS (consome crédito)."""
+    __tablename__ = "pedidos_saas"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    
+    valor_consumido = Column(Numeric(10, 2), nullable=False, default=Decimal("5.00"))
+    via_arnaldo = Column(Boolean, default=False)
+    data = Column(DateTime, default=datetime.utcnow)
+    status = Column(String, default=PedidoStatus.ATIVO.value)
+    
+    user = relationship("User", back_populates="pedidos_saas")
+    repasse = relationship("Repasse", back_populates="pedido", uselist=False, cascade="all, delete-orphan")
+
+
+class Repasse(Base):
+    """Repasse financeiro para o Arnaldo (30% do pedido via_arnaldo)."""
+    __tablename__ = "repasses"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pedido_id = Column(Integer, ForeignKey("pedidos_saas.id"), nullable=False)
+    
+    valor_para_arnaldo = Column(Numeric(10, 2), nullable=False)
+    status = Column(String, default=RepasseStatus.PENDENTE.value)
+    data_repasse = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    pedido = relationship("PedidoSaas", back_populates="repasse")

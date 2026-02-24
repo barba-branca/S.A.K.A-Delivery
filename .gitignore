@@ -27,33 +27,26 @@ dist-ssr
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-build/
-develop-eggs/
-eggs/
-.eggs/
 *.egg-info/
 *.egg
-
-# Virtual Environment
 venv/
-ENV/
-env/
 .venv/
+backend/venv/
+backend/.venv/
 
-# Environment variables (IMPORTANT: Contains secrets!)
+# Environment variables (never commit secrets!)
 .env
-!.env.example
 backend/.env
-!backend/.env.example
 
-# Database
+# Databases
 *.db
-*.sqlite
 *.sqlite3
 
-# pytest
+# Test artifacts
+backend/test.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# OS files
+Thumbs.db

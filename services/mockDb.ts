@@ -101,39 +101,14 @@ const INITIAL_ORDERS: Order[] = [
 ];
 
 const STORAGE_KEY = 'saka_kds_orders';
-const RESET_DATE_KEY = 'saka_kds_last_reset_day';
 
 export const getOrders = (): Order[] => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === null) {
+  if (!stored) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_ORDERS));
     return INITIAL_ORDERS;
   }
   return JSON.parse(stored);
-};
-
-export const resetOrders = (): Order[] => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
-  return [];
-};
-
-export const deleteOrder = (orderId: string): Order[] => {
-  const orders = getOrders();
-  const updatedOrders = orders.filter(order => order.id !== orderId);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
-  return updatedOrders;
-};
-
-export const checkAndPerformDailyReset = (): boolean => {
-  const today = new Date().toISOString().split('T')[0];
-  const lastReset = localStorage.getItem(RESET_DATE_KEY);
-
-  if (lastReset !== today) {
-    resetOrders();
-    localStorage.setItem(RESET_DATE_KEY, today);
-    return true;
-  }
-  return false;
 };
 
 export const updateOrderStatus = (orderId: string, newStatus: OrderStatus): Order[] => {
@@ -141,7 +116,7 @@ export const updateOrderStatus = (orderId: string, newStatus: OrderStatus): Orde
   const updatedOrders = orders.map(order => {
     if (order.id === orderId) {
       const updates: Partial<Order> = { status: newStatus };
-
+      
       // Update timestamps based on new status
       if (newStatus === OrderStatus.PREPARING && !order.preparingAt) {
         updates.preparingAt = Date.now();
@@ -154,7 +129,7 @@ export const updateOrderStatus = (orderId: string, newStatus: OrderStatus): Orde
           updates.driverName = Math.random() > 0.5 ? 'Carlos Motoboy' : 'Marcos Entregas';
         }
       }
-
+      
       return { ...order, ...updates };
     }
     return order;
@@ -172,9 +147,9 @@ export const createOrder = (order: Order): Order[] => {
 
 export const markDriverAsPaid = (driverName: string): Order[] => {
   const orders = getOrders();
-  const updatedOrders = orders.map(order =>
-    (order.driverName === driverName && order.status === OrderStatus.DELIVERY)
-      ? { ...order, isDriverPaid: true }
+  const updatedOrders = orders.map(order => 
+    (order.driverName === driverName && order.status === OrderStatus.DELIVERY) 
+      ? { ...order, isDriverPaid: true } 
       : order
   );
   localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedOrders));
