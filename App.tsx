@@ -5,6 +5,7 @@ import LoginPage from './src/pages/LoginPage';
 import DashboardPage from './src/pages/DashboardPage';
 import PedidosPage from './src/pages/PedidosPage';
 import KDSPage from './src/pages/KDSPage';
+import FaturamentoPage from './src/pages/FaturamentoPage';
 import Sidebar from './src/components/Sidebar';
 
 /**
@@ -58,6 +59,7 @@ const App: React.FC = () => {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/pedidos" element={<PedidosPage />} />
             <Route path="/kds" element={<KDSPage />} />
+            <Route path="/faturamento" element={<FaturamentoPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

@@ -36,9 +36,10 @@ const DashboardPage: React.FC = () => {
 
     const loadData = async () => {
         try {
+            const isAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN';
             const [pedidosData, repasseData] = await Promise.all([
                 listarPedidosAPI(5),
-                getRepasseMensalAPI(),
+                isAdmin ? getRepasseMensalAPI().catch(() => null) : Promise.resolve(null),
             ]);
             setPedidos(pedidosData);
             setRepasse(repasseData);
@@ -170,19 +171,26 @@ const DashboardPage: React.FC = () => {
                     <p className="text-2xl font-bold text-white mt-1">{pedidosRestantes.toLocaleString()}</p>
                 </div>
 
-                {/* Repasse Pendente */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 hover:border-amber-500/30 transition-colors group">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="p-2 bg-amber-500/10 rounded-lg">
-                            <TrendingUp size={20} className="text-amber-400" />
+                {/* Economia Gerada - Apenas para Clientes (não admins) */}
+                {user?.role === 'CLIENTE' && (
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/30 transition-colors group">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="p-2 bg-emerald-500/10 rounded-lg">
+                                <TrendingUp size={20} className="text-emerald-400" />
+                            </div>
+                            <ArrowUpRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
                         </div>
-                        <ArrowUpRight size={16} className="text-slate-600 group-hover:text-amber-400 transition-colors" />
+                        <p className="text-sm text-slate-400">Economia Estimada</p>
+                        <div className="mt-1 flex items-baseline gap-2">
+                            <p className="text-2xl font-bold text-white">
+                                R$ {(pedidos.length * (15 - 5)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </p>
+                            <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                                vs. Marketplace
+                            </span>
+                        </div>
                     </div>
-                    <p className="text-sm text-slate-400">Repasse Pendente</p>
-                    <p className="text-2xl font-bold text-white mt-1">
-                        R$ {(repasse?.total_pendente || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                </div>
+                )}
 
                 {/* Total Pedidos */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/30 transition-colors group">
@@ -220,7 +228,11 @@ const DashboardPage: React.FC = () => {
                                             <p className="text-sm font-medium text-white">Pedido #{p.id}</p>
                                             <p className="text-xs text-slate-500">
                                                 {new Date(p.data).toLocaleDateString('pt-BR')} •{' '}
-                                                {p.via_arnaldo && <span className="text-amber-400">Via Arnaldo</span>}
+                                                {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') ? (
+                                                    p.via_arnaldo && <span className="text-purple-400">S.A.K.A. Express</span>
+                                                ) : (
+                                                    <span className="text-purple-400">Entrega Inteligente AI</span>
+                                                )}
                                             </p>
                                         </div>
                                     </div>

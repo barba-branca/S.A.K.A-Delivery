@@ -35,8 +35,10 @@ class OrderSource(str, enum.Enum):
 
 class UserRole(str, enum.Enum):
     """Papel do usuário no sistema."""
-    ADMIN = "ADMIN"
-    KITCHEN = "KITCHEN"
+    SUPER_ADMIN = "SUPER_ADMIN"
+    CLIENTE = "CLIENTE"
+    ADMIN = "ADMIN"      # Legacy
+    KITCHEN = "KITCHEN"  # Legacy
 
 
 class PedidoStatus(str, enum.Enum):
@@ -204,3 +206,39 @@ class Repasse(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     pedido = relationship("PedidoSaas", back_populates="repasse")
+
+
+class WebhookMercadoPagoLog(Base):
+    """Log de auditoria para webhooks do Mercado Pago."""
+    __tablename__ = "webhook_mercadopago_logs"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    # Dados do webhook recebido
+    webhook_id = Column(String, nullable=True, index=True)  # ID da notificação do MP
+    payment_id = Column(Integer, nullable=True, index=True)  # ID do pagamento
+    user_id = Column(Integer, nullable=True, index=True)  # ID do usuário no sistema
+    
+    # Dados da transação
+    transaction_amount = Column(Numeric(10, 2), nullable=True)
+    payment_status = Column(String, nullable=True)
+    
+    # Ações tomadas
+    action = Column(String, nullable=False)  # created, updated, approved, rejected, etc.
+    status = Column(String, nullable=False)  # success, error, ignored, retry
+    
+    # Dados originais (JSON)
+    request_payload = Column(Text, nullable=True)
+    payment_data = Column(Text, nullable=True)  # Dados retornados da API do MP
+    
+    # Informações de erro
+    error_message = Column(Text, nullable=True)
+    retry_count = Column(Integer, default=0)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    processed_at = Column(DateTime, nullable=True)
+    
+    #Resultado
+    credit_added = Column(Numeric(10, 2), nullable=True)
+    new_balance = Column(Numeric(10, 2), nullable=True)

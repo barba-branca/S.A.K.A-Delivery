@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     # Gemini AI
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
     
+    # MercadoPago
+    mercadopago_public_key: str = os.getenv("MERCADOPAGO_PUBLIC_KEY", "")
+    mercadopago_access_token: str = os.getenv("MERCADOPAGO_ACCESS_TOKEN", "")
+    mercadopago_webhook_secret: str = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "")
+    
+    # Configurações de retry para webhook
+    webhook_max_retries: int = int(os.getenv("WEBHOOK_MAX_RETRIES", "3"))
+    webhook_retry_delay: int = int(os.getenv("WEBHOOK_RETRY_DELAY", "5"))
+    
     class Config:
         env_file = ".env"
         extra = "allow"

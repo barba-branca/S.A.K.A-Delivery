@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import KanbanBoard from '../../components/KanbanBoard';
 import DriverPayouts from '../../components/DriverPayouts';
+import NewOrderModal from '../../components/NewOrderModal';
 import { Order, OrderStatus, OrderSource, UserRole } from '../../types';
 import { getKDSOrdersAPI, updateKDSOrderStatusAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,6 +17,7 @@ const KDSPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [connected, setConnected] = useState(true);
     const [showPayouts, setShowPayouts] = useState(false);
+    const [showNewOrderModal, setShowNewOrderModal] = useState(false);
     const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
 
     const loadOrders = useCallback(async () => {
@@ -45,7 +47,8 @@ const KDSPage: React.FC = () => {
             // Fallback: use mockDb if backend is down
             try {
                 const mockDb = await import('../../services/mockDb');
-                setOrders(mockDb.getOrders());
+                const orders = await mockDb.getOrders();
+                setOrders(orders);
             } catch {
                 // ignore
             }
@@ -82,7 +85,7 @@ const KDSPage: React.FC = () => {
             // Offline: update local mock
             try {
                 const mockDb = await import('../../services/mockDb');
-                const updated = mockDb.updateOrderStatus(orderId, newStatus);
+                const updated = await mockDb.updateOrderStatus(orderId, newStatus);
                 setOrders(updated);
             } catch {
                 setOrders(prev =>
@@ -111,7 +114,7 @@ const KDSPage: React.FC = () => {
         } else {
             try {
                 const mockDb = await import('../../services/mockDb');
-                const updated = mockDb.markDriverAsPaid(driverName);
+                const updated = await mockDb.markDriverAsPaid(driverName);
                 setOrders(updated);
             } catch {
                 // ignore
@@ -145,6 +148,34 @@ const KDSPage: React.FC = () => {
             }
         } else {
             simulateNewOrderLocal();
+        }
+    };
+
+    const handleCreateOrder = async (order: Order) => {
+        if (connected) {
+            try {
+                const { default: api } = await import('../services/api');
+                const orderData = {
+                    customer_name: order.customerName,
+                    source: order.source,
+                    delivery_fee: order.deliveryFee,
+                    items: order.items.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        notes: item.notes,
+                        unit_price: 0,
+                        total_price: 0
+                    }))
+                };
+                await api.post('/orders/create', orderData);
+                await loadOrders();
+            } catch (err) {
+                console.error('Erro ao criar pedido:', err);
+                setOrders(prev => [order, ...prev]);
+            }
+        } else {
+            // Offline: add locally
+            setOrders(prev => [order, ...prev]);
         }
     };
 
@@ -220,7 +251,7 @@ const KDSPage: React.FC = () => {
                     </button>
 
                     <button
-                        onClick={simulateNewOrder}
+                        onClick={() => setShowNewOrderModal(true)}
                         className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-purple-900/20"
                     >
                         <Plus size={14} />
@@ -238,6 +269,15 @@ const KDSPage: React.FC = () => {
                     orders={orders}
                     onPayDriver={handlePayDriver}
                     onClose={() => setShowPayouts(false)}
+                />
+            )}
+
+            {/* New Order Modal */}
+            {showNewOrderModal && (
+                <NewOrderModal
+                    onClose={() => setShowNewOrderModal(false)}
+                    onCreateOrder={handleCreateOrder}
+                    onSimulateOrder={simulateNewOrder}
                 />
             )}
         </div>

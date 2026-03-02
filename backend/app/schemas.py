@@ -26,8 +26,10 @@ class OrderSource(str, Enum):
 
 
 class UserRole(str, Enum):
-    ADMIN = "ADMIN"
-    KITCHEN = "KITCHEN"
+    SUPER_ADMIN = "SUPER_ADMIN"
+    CLIENTE = "CLIENTE"
+    ADMIN = "ADMIN"      # Legacy
+    KITCHEN = "KITCHEN"  # Legacy
 
 
 class PedidoStatusEnum(str, Enum):
@@ -220,6 +222,18 @@ class PedidoSaasResponse(BaseModel):
         from_attributes = True
 
 
+class PedidoSaasResponseCliente(BaseModel):
+    """Resposta filtrada para o cliente final (sem repasse interno)."""
+    id: int
+    user_id: int
+    valor_consumido: float
+    data: datetime
+    status: str
+    
+    class Config:
+        from_attributes = True
+
+
 # ============== Repasse Schemas ==============
 
 class RepasseResponse(BaseModel):
@@ -250,3 +264,27 @@ class WebhookPagamentoPayload(BaseModel):
     txid: str
     valor: float
     user_id: int
+
+
+# ============== Faturamento ==============
+
+class FaturamentoCriarRequest(BaseModel):
+    """Requisição para criar uma cobrança PIX."""
+    user_id: int
+    valor: float = Field(..., gt=0, le=10000)
+    descricao: Optional[str] = None
+
+
+class FaturamentoCobrancaResponse(BaseModel):
+    """Resposta com os dados da cobrança PIX."""
+    id: str
+    user_id: int
+    valor: float
+    status: str
+    txid: str
+    codigo_pix: str
+    chave_pix: str
+    descricao: str
+    qr_code_url: Optional[str] = None
+    data_criacao: str
+    data_expiracao: str

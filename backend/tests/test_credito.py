@@ -11,6 +11,7 @@ async def _get_auth_token(client: AsyncClient) -> str:
         "username": "credituser",
         "full_name": "Credit Test User",
         "password": "test123",
+        "role": "SUPER_ADMIN"
     })
     resp = await client.post("/auth/login", json={
         "username": "credituser",

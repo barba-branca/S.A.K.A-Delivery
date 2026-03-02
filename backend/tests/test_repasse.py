@@ -11,6 +11,7 @@ async def _setup_user_with_credit(client: AsyncClient) -> str:
         "username": "repasseuser",
         "full_name": "Repasse Test User",
         "password": "test123",
+        "role": "SUPER_ADMIN"
     })
     resp = await client.post("/auth/login", json={
         "username": "repasseuser",
@@ -30,6 +31,7 @@ async def test_repasse_mensal_empty(client: AsyncClient):
         "username": "emptyuser",
         "full_name": "Empty User",
         "password": "test123",
+        "role": "SUPER_ADMIN"
     })
     resp = await client.post("/auth/login", json={
         "username": "emptyuser",

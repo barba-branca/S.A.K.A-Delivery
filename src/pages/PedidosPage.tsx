@@ -9,13 +9,13 @@ interface PedidoItem {
     id: number;
     user_id: number;
     valor_consumido: number;
-    via_arnaldo: boolean;
+    via_arnaldo?: boolean;
     data: string;
     status: string;
 }
 
 const PedidosPage: React.FC = () => {
-    const { refreshUser } = useAuth();
+    const { refreshUser, user } = useAuth();
     const [pedidos, setPedidos] = useState<PedidoItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
@@ -118,7 +118,11 @@ const PedidosPage: React.FC = () => {
                             <tr className="border-b border-slate-800">
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">ID</th>
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Valor</th>
-                                <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Via Arnaldo</th>
+                                {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
+                                    <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Logística (S.A.K.A. Express / Interno)</th>
+                                ) : (
+                                    <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Logística</th>
+                                )}
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Data</th>
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Status</th>
                             </tr>
@@ -142,12 +146,16 @@ const PedidosPage: React.FC = () => {
                                             <span className="text-sm text-white">R$ {p.valor_consumido.toFixed(2)}</span>
                                         </td>
                                         <td className="px-5 py-3">
-                                            {p.via_arnaldo ? (
-                                                <span className="flex items-center gap-1 text-amber-400 text-sm">
-                                                    <User size={14} /> Sim (30%)
-                                                </span>
+                                            {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
+                                                p.via_arnaldo ? (
+                                                    <span className="flex items-center gap-1 text-purple-400 text-sm">
+                                                        <User size={14} /> S.A.K.A. Express
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-500 text-sm">Própria</span>
+                                                )
                                             ) : (
-                                                <span className="text-slate-500 text-sm">Não</span>
+                                                <span className="text-slate-300 text-sm">Integrada (S.A.K.A. Express)</span>
                                             )}
                                         </td>
                                         <td className="px-5 py-3">
@@ -184,9 +192,8 @@ const PedidosPage: React.FC = () => {
                                 />
                                 <div>
                                     <span className="text-white text-sm font-medium group-hover:text-purple-300 transition-colors">
-                                        Via Arnaldo
+                                        Solicitar Entrega Inteligente S.A.K.A.
                                     </span>
-                                    <p className="text-xs text-slate-500">30% (R$1.50) será repassado ao Arnaldo</p>
                                 </div>
                             </label>
                         </div>

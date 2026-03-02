@@ -10,7 +10,6 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,9 +19,6 @@ from .database import get_db
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# Password hashing with bcrypt
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # Bearer token scheme
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -30,13 +26,21 @@ bearer_scheme = HTTPBearer(auto_error=False)
 # ============== Password Hashing ==============
 
 def hash_password(password: str) -> str:
-    """Cria hash bcrypt da senha."""
-    return pwd_context.hash(password)
+    """Cria hash da senha usando PBKDF2."""
+    # Use PBKDF2 with SHA256 - more compatible
+    salt = b"saka_delivery_salt"
+    key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return key.hex()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verifica senha contra hash bcrypt."""
-    return pwd_context.verify(plain_password, hashed_password)
+    """Verifica senha contra hash."""
+    try:
+        salt = b"saka_delivery_salt"
+        key = hashlib.pbkdf2_hmac('sha256', plain_password.encode('utf-8'), salt, 100000)
+        return key.hex() == hashed_password
+    except Exception:
+        return False
 
 
 # ============== JWT Tokens ==============

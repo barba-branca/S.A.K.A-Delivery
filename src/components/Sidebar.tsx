@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-    LayoutDashboard, ShoppingBag, ChefHat, LogOut, Wallet
+    LayoutDashboard, ShoppingBag, ChefHat, LogOut, Wallet, CreditCard
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -18,6 +18,7 @@ const Sidebar: React.FC = () => {
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/pedidos', label: 'Pedidos', icon: ShoppingBag },
         { to: '/kds', label: 'KDS', icon: ChefHat },
+        { to: '/faturamento', label: 'Minha Carteira', icon: CreditCard },
     ];
 
     return (

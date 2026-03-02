@@ -98,4 +98,29 @@ export const updateKDSOrderStatusAPI = async (orderId: string, status: string, d
     return res.data;
 };
 
+export const createKDSOrderAPI = async (orderData: {
+    customer_name: string;
+    source: string;
+    delivery_fee: number;
+    items: Array<{ name: string; quantity: number; notes?: string }>;
+}) => {
+    const res = await api.post('/orders/create', orderData);
+    return res.data;
+};
+
+export const deleteKDSOrderAPI = async (orderId: string) => {
+    const res = await api.delete(`/orders/${orderId}`);
+    return res.data;
+};
+
+export const resetKDSOrdersAPI = async () => {
+    const res = await api.delete('/orders');
+    return res.data;
+};
+
+export const payDriverAPI = async (driverName: string) => {
+    const res = await api.post(`/orders/drivers/${driverName}/pay`);
+    return res.data;
+};
+
 export default api;
