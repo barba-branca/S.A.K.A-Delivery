@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
@@ -95,7 +96,13 @@ async def update_order_status(
     if update_data.is_driver_paid is not None and order.driver_name:
         order.is_driver_paid = update_data.is_driver_paid
         await db.commit()
-        await db.refresh(order)
+        # Re-fetch with eagerly loaded items
+        from sqlalchemy.orm import selectinload
+        from ..models import Order as OrderModel
+        result = await db.execute(
+            select(OrderModel).options(selectinload(OrderModel.items)).where(OrderModel.id == order_id)
+        )
+        order = result.scalar_one()
     
     return order_to_response(order)
 

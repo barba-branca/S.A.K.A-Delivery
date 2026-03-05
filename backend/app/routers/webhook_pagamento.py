@@ -183,7 +183,7 @@ def verify_webhook_signature(request: Request, secret: str, raw_body: bytes, pay
         True se a assinatura for válida, False caso contrário
     """
     print("\n" + "="*60)
-    print("🔐 VERIFICAÇÃO DE ASSINATURA DO WEBHOOK MERCADO PAGO")
+    print("[VERIFY] VERIFICACAO DE ASSINATURA DO WEBHOOK MERCADO PAGO")
     print("="*60)
     
     # ========== 0. LOGS DETALHADOS - Headers e Body ==========
@@ -199,7 +199,7 @@ def verify_webhook_signature(request: Request, secret: str, raw_body: bytes, pay
     webhook_secret = os.getenv('MERCADOPAGO_WEBHOOK_SECRET')
     
     if not webhook_secret:
-        print("❌ ERRO: MERCADOPAGO_WEBHOOK_SECRET não encontrado no .env")
+        print("[ERROR] ERRO: MERCADOPAGO_WEBHOOK_SECRET nao encontrado no .env")
         return False
     
     # Aplicar strip() para garantir que não haja espaços em branco
@@ -219,15 +219,15 @@ def verify_webhook_signature(request: Request, secret: str, raw_body: bytes, pay
     print(f"📥 DEBUG - x-request-id: {request_id_header}")
     
     if not v1_header:
-        print("❌ ERRO: Cabeçalho x-signature-v1 ausente")
+        print("[ERROR] Cabeçalho x-signature-v1 ausente")
         return False
     
     if not ts_header:
-        print("❌ ERRO: Cabeçalho x-signature-ts ausente")
+        print("[ERROR] Cabeçalho x-signature-ts ausente")
         return False
     
     if not request_id_header:
-        print("❌ ERRO: Cabeçalho x-request-id ausente")
+        print("[ERROR] Cabeçalho x-request-id ausente")
         return False
     
     # ========== 3. Extrair data.id do payload ==========
@@ -245,7 +245,7 @@ def verify_webhook_signature(request: Request, secret: str, raw_body: bytes, pay
             pass
     
     if not data_id:
-        print("❌ ERRO: data.id não encontrado no payload")
+        print("[ERROR] data.id não encontrado no payload")
         return False
     
     # ========== 4. Montar a string para Hash (FORMATO EXATO DO MP) ==========
@@ -269,7 +269,7 @@ def verify_webhook_signature(request: Request, secret: str, raw_body: bytes, pay
     is_valid = hmac.compare_digest(local_hash, v1_header)
     
     if is_valid:
-        print("✅ SUCESSO: Assinatura válida!")
+        print("[OK] SUCESSO: Assinatura valida!")
         print("="*60 + "\n")
         return True
     else:
@@ -705,15 +705,15 @@ async def webhook_mercadopago(
             action=payload.get("action", "unknown"),
             status="error",
             request_payload=payload,
-            error_message="Assinatura de webhook inválida"
+            error_message="Assinatura de webhook invalida"
         )
-        print('ASSINATURA INVÁLIDA')
+        print('ASSINATURA INVALIDA')
         return JSONResponse(
             status_code=status.HTTP_403_FORBIDDEN,
             content={"status": "error", "message": "Assinatura inválida"}
         )
     
-    print("✅ ASSINATURA VÁLIDA - Processando webhook...")
+        print("[OK] ASSINATURA VALIDA - Processando webhook...")
     
     # ========== 3. Verificar idempotência ==========
     payment_id_from_data = payload.get("data", {}).get("id")

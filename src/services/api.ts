@@ -123,4 +123,26 @@ export const payDriverAPI = async (driverName: string) => {
     return res.data;
 };
 
+// ============== Admin ==============
+
+export const getAdminUsersAPI = async () => {
+    const res = await api.get('/auth/users');
+    return res.data;
+};
+
+export const updateUserCreditsAPI = async (userId: number, saldoCredito: number) => {
+    const res = await api.patch(`/auth/users/${userId}/creditos`, { saldo_credito: saldoCredito });
+    return res.data;
+};
+
+export const updateUserRoleAPI = async (userId: number, role: string) => {
+    const res = await api.patch(`/auth/users/${userId}/role`, { role });
+    return res.data;
+};
+
+export const deleteUserAPI = async (userId: number) => {
+    const res = await api.delete(`/auth/users/${userId}`);
+    return res.data;
+};
+
 export default api;

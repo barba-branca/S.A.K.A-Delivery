@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
-    LayoutDashboard, ShoppingBag, ChefHat, LogOut, Wallet, CreditCard
+    LayoutDashboard, ShoppingBag, ChefHat, LogOut, Wallet, CreditCard, Shield
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -14,11 +14,14 @@ const Sidebar: React.FC = () => {
         navigate('/login');
     };
 
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
     const navItems = [
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/pedidos', label: 'Pedidos', icon: ShoppingBag },
         { to: '/kds', label: 'KDS', icon: ChefHat },
         { to: '/faturamento', label: 'Minha Carteira', icon: CreditCard },
+        ...(isAdmin ? [{ to: '/admin', label: 'Admin', icon: Shield }] : []),
     ];
 
     return (

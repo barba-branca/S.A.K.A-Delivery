@@ -91,7 +91,12 @@ async def create_order(db: AsyncSession, order_data: OrderCreate, order_id: str)
     
     db.add(order)
     await db.commit()
-    await db.refresh(order)
+    
+    # Re-fetch with eagerly loaded items to avoid lazy-loading in async context
+    result = await db.execute(
+        select(Order).options(selectinload(Order.items)).where(Order.id == order_id)
+    )
+    order = result.scalar_one()
     
     logger.info(f"Pedido criado: {order.id} (Display: #{order.display_id})")
     return order
@@ -154,7 +159,12 @@ async def create_order_from_ifood(db: AsyncSession, ifood_order: dict) -> Order:
     
     db.add(order)
     await db.commit()
-    await db.refresh(order)
+    
+    # Re-fetch with eagerly loaded items
+    result = await db.execute(
+        select(Order).options(selectinload(Order.items)).where(Order.id == order.id)
+    )
+    order = result.scalar_one()
     
     logger.info(f"Pedido iFood criado: {order.id} (Display: #{order.display_id})")
     return order
@@ -180,7 +190,12 @@ async def update_order_status(
             order.driver_name = driver_name
     
     await db.commit()
-    await db.refresh(order)
+    
+    # Re-fetch with eagerly loaded items
+    result = await db.execute(
+        select(Order).options(selectinload(Order.items)).where(Order.id == order_id)
+    )
+    order = result.scalar_one()
     
     logger.info(f"Pedido {order_id} atualizado para status: {new_status.value}")
     return order

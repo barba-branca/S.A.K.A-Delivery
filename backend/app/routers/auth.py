@@ -97,3 +97,57 @@ async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     return {"message": "Usuário excluído com sucesso", "userId": user_id}
+
+
+@router.patch("/users/{user_id}/creditos", summary="Atualiza créditos do usuário (Admin)")
+async def update_user_credits(
+    user_id: int,
+    body: dict,
+    current_user: UserModel = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Atualiza o saldo de créditos de um usuário. Requer ADMIN ou SUPER_ADMIN."""
+    if current_user.role not in ("ADMIN", "SUPER_ADMIN"):
+        raise HTTPException(status_code=403, detail="Acesso negado. Apenas administradores.")
+    
+    novo_saldo = body.get("saldo_credito")
+    if novo_saldo is None or not isinstance(novo_saldo, (int, float)):
+        raise HTTPException(status_code=400, detail="Campo 'saldo_credito' (número) é obrigatório")
+    
+    if novo_saldo < 0:
+        raise HTTPException(status_code=400, detail="Saldo não pode ser negativo")
+    
+    user = await user_service.update_user_credits(db, user_id, float(novo_saldo))
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    return {
+        "message": f"Créditos atualizados para R${novo_saldo:.2f}",
+        "user": user_to_response(user),
+    }
+
+
+@router.patch("/users/{user_id}/role", summary="Atualiza role do usuário (Admin)")
+async def update_user_role(
+    user_id: int,
+    body: dict,
+    current_user: UserModel = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Atualiza o role de um usuário. Requer ADMIN ou SUPER_ADMIN."""
+    if current_user.role not in ("ADMIN", "SUPER_ADMIN"):
+        raise HTTPException(status_code=403, detail="Acesso negado. Apenas administradores.")
+    
+    new_role = body.get("role")
+    valid_roles = ["SUPER_ADMIN", "ADMIN", "CLIENTE", "KITCHEN"]
+    if not new_role or new_role not in valid_roles:
+        raise HTTPException(status_code=400, detail=f"Role inválido. Opções: {valid_roles}")
+    
+    user = await user_service.update_user_role(db, user_id, new_role)
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    return {
+        "message": f"Role atualizado para {new_role}",
+        "user": user_to_response(user),
+    }

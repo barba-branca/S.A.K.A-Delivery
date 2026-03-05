@@ -114,3 +114,33 @@ async def delete_user(db: AsyncSession, user_id: int) -> bool:
     
     logger.info(f"Usuário excluído: {user.username}")
     return True
+
+
+async def update_user_credits(db: AsyncSession, user_id: int, novo_saldo: float) -> Optional[User]:
+    """Atualiza o saldo de créditos de um usuário (admin only)."""
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        return None
+    
+    old_saldo = float(user.saldo_credito or 0)
+    user.saldo_credito = Decimal(str(novo_saldo))
+    await db.commit()
+    await db.refresh(user)
+    
+    logger.info(f"Créditos atualizados: {user.username} R${old_saldo:.2f} → R${novo_saldo:.2f}")
+    return user
+
+
+async def update_user_role(db: AsyncSession, user_id: int, new_role: str) -> Optional[User]:
+    """Atualiza o role de um usuário (admin only)."""
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        return None
+    
+    old_role = user.role
+    user.role = new_role
+    await db.commit()
+    await db.refresh(user)
+    
+    logger.info(f"Role atualizado: {user.username} {old_role} → {new_role}")
+    return user
