@@ -39,7 +39,8 @@ from sqlalchemy.orm import selectinload
 
 from ..config import get_settings
 from ..database import get_db
-from ..models import User, WebhookMercadoPagoLog
+from ..models import User, WebhookMercadoPagoLog, TransactionStatus
+from ..services.payment_service import PaymentService
 
 # Configuração de logging com rotação de arquivos
 def setup_logging() -> logging.Logger:
@@ -859,6 +860,14 @@ async def webhook_mercadopago(
             error_message=f"Pagamento status: {payment_status}"
         )
         
+        # Atualizar Transaction para cancelled se rejeitado/cancelado
+        if payment_status in ("rejected", "cancelled", "refunded"):
+            await PaymentService.update_transaction_status(
+                db=db,
+                external_id=str(payment_id),
+                new_status=TransactionStatus.CANCELLED.value,
+            )
+        
         return JSONResponse(
             status_code=status.HTTP_200_OK,
             content={
@@ -926,6 +935,13 @@ async def webhook_mercadopago(
         amount=Decimal(str(transaction_amount)),
         payment_id=payment_id,
         action=action
+    )
+    
+    # Atualizar Transaction para approved (atômico com crédito)
+    await PaymentService.update_transaction_status(
+        db=db,
+        external_id=str(payment_id),
+        new_status=TransactionStatus.APPROVED.value,
     )
     
     if error:

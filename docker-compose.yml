@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: saka_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: saka_user
+      POSTGRES_PASSWORD: saka_password
+      POSTGRES_DB: saka_delivery_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - saka_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U saka_user -d saka_delivery_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.yml
+    container_name: saka_backend
+    restart: always
+    environment:
+      # Conexão com o banco (usando asyncpg conforme requisitos do FastAPI)
+      - DATABASE_URL=postgresql+asyncpg://saka_user:saka_password@db:5432/saka_delivery_db
+
+      # Servidor
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DEBUG=false
+      - FRONTEND_URL=http://localhost:5173
+
+      # Autenticação e JWT
+      - JWT_SECRET=saka-delivery-secret-key-change-in-production-12345678
+      - JWT_EXPIRE_MINUTES=1440
+      - JWT_ALGORITHM=HS256
+
+      # Integrações de terceiros (preencher em produção conforme .env.example)
+      - IFOOD_CLIENT_ID=
+      - IFOOD_CLIENT_SECRET=
+      - MERCADOPAGO_PUBLIC_KEY=
+      - MERCADOPAGO_ACCESS_TOKEN=
+      - MERCADOPAGO_WEBHOOK_SECRET=
+      - WEBHOOK_MAX_RETRIES=3
+      - WEBHOOK_RETRY_DELAY=5
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - saka_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:
+    name: saka_postgres_data
+
+networks:
+  saka_network:
+    name: saka_network
+    driver: bridge

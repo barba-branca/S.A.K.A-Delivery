@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 
 from .config import get_settings
 from .database import init_db
-from .routers import webhook, orders, auth, pacotes, pedidos_saas, repasse, webhook_pagamento, faturamento
+from .routers import webhook, orders, auth, pacotes, pedidos_saas, repasse, webhook_pagamento, faturamento, payments
 
 logging.basicConfig(
     level=logging.INFO,
@@ -121,6 +121,7 @@ app.include_router(pedidos_saas.router)
 app.include_router(repasse.router)
 app.include_router(webhook_pagamento.router)
 app.include_router(faturamento.router)
+app.include_router(payments.router)
 
 
 @app.get("/", tags=["Health"])

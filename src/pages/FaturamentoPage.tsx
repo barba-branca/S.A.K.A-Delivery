@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { QrCode, CreditCard, Wallet, Copy, Check, AlertCircle, RefreshCw, DollarSign, Activity, Zap } from 'lucide-react';
 import QRCodeLib from 'qrcode';
+import PaymentModal from '../components/PaymentModal';
 
 interface FaturamentoData {
     saldoAtual: number;
@@ -23,6 +24,7 @@ const FaturamentoPage: React.FC = () => {
     const [consumo, setConsumo] = useState<any[]>([]);
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
     // Valores pré-definidos
     const valoresPredefinidos = [
@@ -36,69 +38,13 @@ const FaturamentoPage: React.FC = () => {
     const gerarQRCode = async () => {
         if (!token || !user) return;
 
-        setLoading(true);
-        setError(null);
-        setQrCodeUrl('');
-
-        try {
-            const valorNum = parseFloat(valor);
-            if (isNaN(valorNum) || valorNum <= 0) {
-                setError('Valor inválido');
-                return;
-            }
-
-            const response = await fetch(`http://localhost:8000/faturamento/qrcode/${valorNum}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro ao gerar QR Code');
-            }
-
-            const data = await response.json();
-
-            // Gerar QR Code a partir do código PIX
-            const pixCode = data.data.codigo_pix;
-
-            try {
-                const qrDataUrl = await QRCodeLib.toDataURL(pixCode, {
-                    width: 256,
-                    margin: 2,
-                    color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    },
-                    errorCorrectionLevel: 'M'
-                });
-                setQrCodeUrl(qrDataUrl);
-            } catch (qrError) {
-                console.error('Erro ao gerar QR code:', qrError);
-                setError('Erro ao gerar imagem do QR Code');
-            }
-
-            setFaturamento({
-                saldoAtual: user.saldoCredito || 0,
-                valorCredito: valorNum,
-                chavePix: data.data.chave_pix,
-                codigoPix: pixCode,
-                txid: data.data.txid,
-                status: 'PENDENTE'
-            });
-
-            // Simular verificação de pagamento após 5 segundos
-            setTimeout(() => {
-                setFaturamento(prev => prev ? { ...prev, status: 'PAGO' } : null);
-            }, 5000);
-
-        } catch (err: any) {
-            setError(err.message || 'Erro ao gerar QR Code');
-        } finally {
-            setLoading(false);
+        const valorNum = parseFloat(valor);
+        if (isNaN(valorNum) || valorNum <= 0) {
+            setError('Valor inválido');
+            return;
         }
+
+        setShowPaymentModal(true);
     };
 
     const copiarCodigo = () => {
@@ -433,8 +379,14 @@ const FaturamentoPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Payment Modal */}
+            <PaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                valor={parseFloat(valor) || 0}
+            />
         </div>
     );
 };
-
 export default FaturamentoPage;

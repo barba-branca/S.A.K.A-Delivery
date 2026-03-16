@@ -54,6 +54,13 @@ class RepasseStatus(str, enum.Enum):
     PAGO = "PAGO"
 
 
+class TransactionStatus(str, enum.Enum):
+    """Status de uma transação de pagamento."""
+    PENDING = "pending"
+    APPROVED = "approved"
+    CANCELLED = "cancelled"
+
+
 # ============== KDS Models (Existing) ==============
 
 class Order(Base):
@@ -161,6 +168,7 @@ class User(Base):
     # Relacionamentos
     pacotes = relationship("Pacote", back_populates="user", cascade="all, delete-orphan")
     pedidos_saas = relationship("PedidoSaas", back_populates="user", cascade="all, delete-orphan")
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
 
 
 class Pacote(Base):
@@ -242,3 +250,20 @@ class WebhookMercadoPagoLog(Base):
     #Resultado
     credit_added = Column(Numeric(10, 2), nullable=True)
     new_balance = Column(Numeric(10, 2), nullable=True)
+
+
+class Transaction(Base):
+    """Transação de pagamento via Mercado Pago (PIX)."""
+    __tablename__ = "transactions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    external_id = Column(String, unique=True, nullable=False, index=True)  # ID do pagamento no MP
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    amount = Column(Numeric(10, 2), nullable=False)
+    status = Column(String, default=TransactionStatus.PENDING.value, index=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relacionamento
+    user = relationship("User", back_populates="transactions")

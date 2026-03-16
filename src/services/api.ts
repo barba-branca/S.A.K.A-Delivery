@@ -145,4 +145,16 @@ export const deleteUserAPI = async (userId: number) => {
     return res.data;
 };
 
+// ============== Payments (Mercado Pago PIX) ==============
+
+export const createPixPaymentAPI = async (valor: number) => {
+    const res = await api.post('/api/v1/payments/create', { valor });
+    return res.data;
+};
+
+export const checkPaymentStatusAPI = async (transactionId: number) => {
+    const res = await api.get(`/api/v1/payments/${transactionId}/status`);
+    return res.data;
+};
+
 export default api;

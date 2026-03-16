@@ -288,3 +288,31 @@ class FaturamentoCobrancaResponse(BaseModel):
     qr_code_url: Optional[str] = None
     data_criacao: str
     data_expiracao: str
+
+
+# ============== Payment (Mercado Pago PIX) ==============
+
+class PaymentCreateRequest(BaseModel):
+    """Requisição para criar pagamento PIX."""
+    valor: float = Field(..., gt=0, le=10000, description="Valor em reais da recarga")
+
+
+class PaymentCreateResponse(BaseModel):
+    """Resposta com dados do pagamento PIX gerado."""
+    transaction_id: int
+    external_id: str
+    qr_code: str
+    qr_code_base64: str
+    copia_cola: str
+
+
+class TransactionStatusResponse(BaseModel):
+    """Status de uma transação."""
+    id: int
+    external_id: str
+    amount: float
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
