@@ -70,11 +70,28 @@
 
 | Ferramenta | Versão |
 |------------|--------|
-| Python | 3.11+ |
-| Node.js | 18+ |
-| PostgreSQL | 15+ |
+| Docker & Compose | v20+ (Recomendado) |
+| Python | 3.11+ (Se rodar local) |
+| Node.js | 18+ (Se rodar local) |
+| PostgreSQL | 15+ (Se rodar local) |
 
-### 1️⃣ Banco de Dados
+### 🐳 Opção 1: Via Docker Compose (Recomendado)
+
+O jeito mais fácil de rodar o ambiente completo (Banco de Dados + Backend) é usando o Docker.
+
+```bash
+# Na raiz do projeto, inicie os containers em background
+docker-compose up -d
+
+# O Backend estará disponível em: http://localhost:8000
+# O Banco de Dados estará disponível na porta 5432
+```
+
+> **Nota:** O frontend ainda precisa ser rodado localmente (veja a seção de Frontend abaixo).
+
+### 💻 Opção 2: Rodando Localmente (Manual)
+
+#### 1️⃣ Banco de Dados
 
 ```sql
 -- No pgAdmin ou psql:
@@ -243,6 +260,43 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 npm run build
 # Output: dist/
 ```
+
+---
+
+## 👨‍💻 Para Desenvolvedores (Contributing)
+
+Se você vai continuar o desenvolvimento deste projeto, siga as diretrizes abaixo:
+
+### Padrões de Código
+- **Frontend**: O projeto utiliza **React 19**, **TypeScript** e **Tailwind CSS**. Certifique-se de corrigir possíveis avisos de linting. Siga o padrão de diretórios separando componentes reutilizáveis (`src/components`) de páginas (`src/pages`).
+- **Backend**: Desenvolvido em **FastAPI** com validação estrita usando Pydantic v2. Utilize o `alembic` para toda e qualquer alteração no esquema do banco de dados (nunca modifique as tabelas manualmente via SQL).
+
+### Fluxo de Trabalho (Git)
+1. Crie uma branch a partir da `main` para a sua funcionalidade (`feature/minha-feature`) ou correção de bug (`bugfix/meu-bug`).
+2. Faça commits atômicos, claros e descritivos.
+3. Certifique-se de rodar a suíte de testes antes de abrir um Pull Request.
+
+### Scripts Úteis
+- **Frontend (`npm` na raiz)**: 
+  - `npm run dev` (Inicia servidor Vite)
+  - `npm run build` (Gera artefatos de produção em `dist/`)
+  - `npm run test` (Executa os testes unitários do Vitest)
+- **Backend (`venv` ativo em `backend/`)**: 
+  - `python run.py` (Inicia Uvicorn)
+  - `pytest tests/ -v` (Inicia os testes automatizados)
+  - `python -m alembic revision --autogenerate -m "mensagem"` (Gera nova migração baseada nas alterações dos `models.py`)
+  - `python -m alembic upgrade head` (Aplica migrações pendentes no banco local)
+
+---
+
+## 🗺 Roadmap (Próximos Passos)
+
+As próximas funcionalidades planejadas para a plataforma incluem:
+
+1. **Gateways de Pagamento em Produção**: Concluir a integração real do checkout via OpenPix/Mercado Pago para efetivação dos QR Codes.
+2. **Atualização em Tempo Real (WebSockets)**: Substituir o *Short Polling* (refresh de 15s) do painel KDS por uma conexão WebSocket bidirecional, para que mudanças de Kanban reflitam instantaneamente.
+3. **Múltiplos Estabelecimentos (Tenants)**: Adaptar os *models* principais (Users, Pedidos) para suportar múltiplos restaurantes no mesmo Banco de Dados de forma isolada (Multi-tenancy SaaS).
+4. **Notificações Push**: Enviar avisos ao painel KDS sempre que novos eventos do webhook do iFood chegarem.
 
 ---
 
