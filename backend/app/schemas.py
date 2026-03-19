@@ -92,6 +92,7 @@ class OrderUpdate(BaseModel):
 class OrderResponse(BaseModel):
     id: str
     displayId: int = Field(alias="display_id")
+    tenant_id: Optional[int] = None
     customerName: str = Field(alias="customer_name")
     source: str
     status: str
@@ -166,6 +167,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
+    tenant_id: Optional[int] = None
     username: str
     email: Optional[str] = None
     fullName: str = Field(alias="full_name")

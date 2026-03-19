@@ -289,6 +289,13 @@ Se você vai continuar o desenvolvimento deste projeto, siga as diretrizes abaix
 
 ---
 
+Para arquitetura profunda, WebSockets e regras SOLID aplicadas ao código, bem como esquemas detalhados em Mermaid, certifique-se de ler a nossa wiki técnica oficial:
+
+- [📄 Documentação Técnica e Padrões (TECH_DOCS)](./docs/TECH_DOCS.md)
+- [🗄️ Esquema do Banco PostgreSQL e Multi-Tenant](./docs/DATABASE_SCHEMA.md)
+
+---
+
 ## 🗺 Roadmap (Próximos Passos)
 
 As próximas funcionalidades planejadas para a plataforma incluem:

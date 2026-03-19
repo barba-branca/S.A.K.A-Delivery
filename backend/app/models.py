@@ -61,6 +61,24 @@ class TransactionStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
+# ============== SaaS Models (New) ==============
+
+class Tenant(Base):
+    """Modelo de Estabelecimento (Multitenancy)."""
+    __tablename__ = "tenants"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    slug = Column(String, unique=True, index=True, nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relacionamentos
+    users = relationship("User", back_populates="tenant")
+    orders = relationship("Order", back_populates="tenant")
+    pacotes = relationship("Pacote", back_populates="tenant")
+
+
 # ============== KDS Models (Existing) ==============
 
 class Order(Base):
@@ -69,6 +87,7 @@ class Order(Base):
     
     id = Column(String, primary_key=True, index=True)
     display_id = Column(Integer, unique=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     
     # Dados do iFood
     ifood_id = Column(String, unique=True, nullable=True, index=True)
@@ -107,6 +126,7 @@ class Order(Base):
     
     # Relacionamento com itens
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    tenant = relationship("Tenant", back_populates="orders")
 
 
 class OrderItem(Base):
@@ -142,16 +162,19 @@ class WebhookEvent(Base):
     processed_at = Column(DateTime, nullable=True)
     error_message = Column(Text, nullable=True)
     
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
-# ============== SaaS Models (New) ==============
+# ============== Users & Billing Models ==============
 
 class User(Base):
     """Modelo de usuário do sistema."""
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
     email = Column(String, unique=True, nullable=True, index=True)
     full_name = Column(String, nullable=False)
@@ -166,6 +189,7 @@ class User(Base):
     last_login = Column(DateTime, nullable=True)
     
     # Relacionamentos
+    tenant = relationship("Tenant", back_populates="users")
     pacotes = relationship("Pacote", back_populates="user", cascade="all, delete-orphan")
     pedidos_saas = relationship("PedidoSaas", back_populates="user", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
@@ -176,6 +200,7 @@ class Pacote(Base):
     __tablename__ = "pacotes"
     
     id = Column(Integer, primary_key=True, autoincrement=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     valor_pago = Column(Numeric(10, 2), nullable=False)
@@ -183,6 +208,7 @@ class Pacote(Base):
     data_compra = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="pacotes")
+    tenant = relationship("Tenant", back_populates="pacotes")
 
 
 class PedidoSaas(Base):

@@ -20,8 +20,9 @@ pytest>=7.4.0
 # Requests
 requests>=2.31.0
 
-# PostgreSQL (async)
+# PostgreSQL (async + sync driver para Alembic)
 asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
 greenlet>=3.0.0
 
 # JWT Authentication

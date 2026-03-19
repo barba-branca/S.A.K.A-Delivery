@@ -93,16 +93,10 @@ async def update_order_status(
     if not order:
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
     
-    if update_data.is_driver_paid is not None and order.driver_name:
-        order.is_driver_paid = update_data.is_driver_paid
-        await db.commit()
-        # Re-fetch with eagerly loaded items
-        from sqlalchemy.orm import selectinload
-        from ..models import Order as OrderModel
-        result = await db.execute(
-            select(OrderModel).options(selectinload(OrderModel.items)).where(OrderModel.id == order_id)
+    if update_data.is_driver_paid is not None:
+        order = await order_service.update_order_payment_status(
+            db, order_id, update_data.is_driver_paid
         )
-        order = result.scalar_one()
     
     return order_to_response(order)
 
