@@ -8,9 +8,13 @@ interface FaturamentoData {
     saldoAtual: number;
     valorCredito: number;
     chavePix: string;
-    codigoPix: string;
-    txid: string;
     status: string;
+}
+
+interface RendimentoData {
+    rendimento_mensal: number;
+    quantidade_pedidos: number;
+    mes: string;
 }
 
 const FaturamentoPage: React.FC = () => {
@@ -22,6 +26,7 @@ const FaturamentoPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [historico, setHistorico] = useState<any[]>([]);
     const [consumo, setConsumo] = useState<any[]>([]);
+    const [rendimento, setRendimento] = useState<RendimentoData | null>(null);
     const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -80,6 +85,17 @@ const FaturamentoPage: React.FC = () => {
                 const pedidosData = await responsePedidos.json();
                 setConsumo(pedidosData || []);
             }
+
+            // Buscar Rendimento Mensal do Restaurante (KDS)
+            const responseRendimento = await fetch(`http://localhost:8000/faturamento/rendimento`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (responseRendimento.ok) {
+                const rendimentoData = await responseRendimento.json();
+                setRendimento(rendimentoData);
+            }
         } catch (err) {
             console.error('Erro ao carregar histórico:', err);
         }
@@ -130,6 +146,29 @@ const FaturamentoPage: React.FC = () => {
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 z-10 relative">
                 <div className="max-w-4xl mx-auto space-y-6">
+
+                    {/* Card de Faturamento Mensal do Restaurante */}
+                    <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/20 rounded-3xl p-6 md:p-8 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl mix-blend-overlay pointer-events-none"></div>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+                            <div>
+                                <h2 className="text-xl font-bold mb-1 flex items-center gap-2 text-white">
+                                    <DollarSign className="w-6 h-6 text-emerald-400" />
+                                    Receita do Restaurante
+                                </h2>
+                                <p className="text-sm text-emerald-400/80 font-medium">Competência: {rendimento?.mes || 'Atual'}</p>
+                            </div>
+                            <div className="text-left md:text-right">
+                                <p className="text-4xl font-black text-white">
+                                    R$ {(rendimento?.rendimento_mensal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </p>
+                                <p className="text-sm text-slate-300 mt-1 flex items-center md:justify-end gap-1">
+                                    <Check className="w-4 h-4 text-emerald-500" />
+                                    {rendimento?.quantidade_pedidos || 0} pedidos concluídos com sucesso
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Card Principal - Gerar QR Code */}
                     <div className="bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-3xl p-8 relative overflow-hidden group hover:border-purple-500/50 transition-colors">

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Order, OrderStatus, OrderSource } from '../types';
+import { Order, OrderStatus, OrderSource } from '../../types';
 import { getKDSOrdersAPI, updateKDSOrderStatusAPI } from '../services/api';
 
 export function useOrders(pollingIntervalMs: number = 15000) {
@@ -31,13 +31,7 @@ export function useOrders(pollingIntervalMs: number = 15000) {
         } catch (err) {
             console.error('Erro ao carregar pedidos KDS do backend:', err);
             setConnected(false);
-            try {
-                const mockDb = await import('../services/mockDb');
-                const localOrders = await mockDb.getOrders();
-                setOrders(localOrders);
-            } catch {
-                // ignore
-            }
+            // ignore mock db
         } finally {
             setLoading(false);
         }
@@ -52,7 +46,9 @@ export function useOrders(pollingIntervalMs: number = 15000) {
     useEffect(() => {
         // Fallback tenant_id to 1 until full frontend multi-tenant UI is built
         const tenantId = 1; 
-        const wsUrl = `ws://localhost:8000/ws/kds/${tenantId}`;
+        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const wsBaseUrl = baseUrl.replace(/^http/, 'ws');
+        const wsUrl = `${wsBaseUrl}/ws/kds/${tenantId}`;
         let ws: WebSocket;
         let reconnectTimeout: NodeJS.Timeout;
 
@@ -126,13 +122,8 @@ export function useOrders(pollingIntervalMs: number = 15000) {
                 setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
             }
         } else {
-            try {
-                const mockDb = await import('../services/mockDb');
-                const updated = await mockDb.updateOrderStatus(orderId, newStatus);
-                setOrders(updated);
-            } catch {
-                setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-            }
+            console.error('Sem conexao para atualizar o status do pedido');
+            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
         }
     };
 
@@ -149,13 +140,7 @@ export function useOrders(pollingIntervalMs: number = 15000) {
                 ));
             }
         } else {
-            try {
-                const mockDb = await import('../services/mockDb');
-                const updated = await mockDb.markDriverAsPaid(driverName);
-                setOrders(updated);
-            } catch {
-                // ignore
-            }
+            console.error('Sem conexao para realizar o pagamento do entregador');
         }
     };
 

@@ -20,6 +20,8 @@ from ..schemas import (
 )
 from ..config import get_settings
 from ..security import get_current_user
+from sqlalchemy import func
+from ..models import Order, OrderStatus
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/faturamento", tags=["Faturamento"])
@@ -188,6 +190,38 @@ async def historico_faturamento(
         "user_id": user_id,
         "saldo_atual": float(user.saldo_credito or 0),
         "historico": []
+    }
+
+
+@router.get("/rendimento", summary="Retorna o faturamento KDS mensal")
+async def rendimento_mensal(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    KDS: Calcula todo o faturamento dos pedidos do restaurante (Tenant) no mês atual.
+    """
+    now = datetime.now()
+    inicio_mes = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    
+    query = select(func.sum(Order.total), func.count(Order.id)).where(
+        Order.status != OrderStatus.CANCELLED.value,
+        Order.created_at >= inicio_mes
+    )
+    
+    if current_user.tenant_id:
+        query = query.where(Order.tenant_id == current_user.tenant_id)
+        
+    result = await db.execute(query)
+    soma_total, contagem = result.first()
+    
+    meses_pt = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
+    mes_str = f"{meses_pt[now.month - 1]} / {now.year}"
+    
+    return {
+        "rendimento_mensal": float(soma_total or 0.0),
+        "quantidade_pedidos": int(contagem or 0),
+        "mes": mes_str
     }
 
 
