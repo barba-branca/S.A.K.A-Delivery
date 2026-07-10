@@ -84,10 +84,10 @@ O jeito mais fácil de rodar o ambiente completo (Banco de Dados + Backend) é u
 docker-compose up -d
 
 # O Backend estará disponível em: http://localhost:8000
-# O Banco de Dados estará disponível na porta 5432
+# O Banco de Dados estará disponível na porta 5435 (mapeamento externo para evitar conflitos de porta 5432)
 ```
 
-> **Nota:** O frontend ainda precisa ser rodado localmente (veja a seção de Frontend abaixo).
+> **Nota:** A porta externa do banco de dados PostgreSQL foi mapeada para `5435` no Docker para evitar conflitos com instâncias de banco padrão (`5432`) rodando no sistema host (ex: `odoo18-db`). O backend conecta internamente ao container via rede Docker (`db:5432`).
 
 ### 💻 Opção 2: Rodando Localmente (Manual)
 

@@ -90,3 +90,20 @@ Diferente do SQLite legado local que simulava booleanos usando numéricos, a mig
 2. **Booleanos Reais**: Os Status de pagamentos (`is_driver_paid`) usam blocos de bit Postgres reais com default `false` blindado contra `null` injection.
 3. **Foreign Keys Enforcement**: Deleção de um `Order` fará *Cascade Delete* dos `OrderItems` automaticamente sob validação da Engine sem trafegar I/O pesado de aplicação, otimizando o delete para 0.1ms.
 4. **Strings Uniques**: Índices nativos criados sobre as colunas `tenant.slug` e `user.username` previnem race constraints na inserção e diminuem tempo rotineiro do Join de Login e Autorização (O(1) Search via Hashing).
+
+## 4. Configuração Local via Docker
+
+O banco de dados é executado em desenvolvimento através do Docker Compose com a imagem `postgres:15-alpine`.
+
+### Conflitos de Porta e Resolução
+Por padrão, o PostgreSQL escuta na porta `5432`. Caso o host já tenha outro serviço rodando nesta porta (ex: `odoo18-db`), o Docker Compose foi reconfigurado para expor a porta **`5435`** no host para evitar conflitos de binding.
+
+* **Porta Externa (Host)**: `5435`
+* **Porta Interna (Docker Network)**: `5432`
+
+### Configuração do `.env` local (Backend fora do Docker)
+Para conectar o backend local (executando fora do Docker) ao PostgreSQL no container, configure a URL de conexão no arquivo `.env` da seguinte forma:
+```ini
+DATABASE_URL=postgresql+asyncpg://saka_user:saka_password@localhost:5435/saka_delivery_db
+```
+

@@ -18,34 +18,20 @@ PERCENTUAL_ARNALDO = Decimal("0.30")  # 30%
 
 async def criar_pedido(db: AsyncSession, user_id: int, via_arnaldo: bool = False) -> PedidoSaas:
     """
-    Cria um pedido SaaS, deduzindo crédito do saldo do usuário.
-    
-    Regras:
-    - Verifica saldo_credito >= 5.00
-    - Deduz R$5.00 do saldo
-    - Se via_arnaldo=True: cria Repasse com valor_para_arnaldo = 1.50 (30%)
+    Cria um pedido SaaS. Acesso vitalício: não valida saldo e não deduz créditos.
     
     Raises:
-        ValueError: Se saldo insuficiente ou usuário não encontrado
+        ValueError: Se usuário não encontrado
     """
     result = await db.execute(select(User).where(User.id == user_id))
     user = result.scalar_one_or_none()
     if not user:
         raise ValueError("Usuário não encontrado")
     
-    saldo_atual = Decimal(str(user.saldo_credito or 0))
-    if saldo_atual < VALOR_POR_PEDIDO:
-        raise ValueError(
-            f"Saldo insuficiente. Saldo atual: R${saldo_atual:.2f}, necessário: R${VALOR_POR_PEDIDO:.2f}"
-        )
-    
-    # Deduz crédito
-    user.saldo_credito = saldo_atual - VALOR_POR_PEDIDO
-    
     # Cria pedido
     pedido = PedidoSaas(
         user_id=user_id,
-        valor_consumido=VALOR_POR_PEDIDO,
+        valor_consumido=Decimal("0.00"),
         via_arnaldo=via_arnaldo,
         data=datetime.utcnow(),
         status=PedidoStatus.ATIVO.value,
@@ -69,8 +55,8 @@ async def criar_pedido(db: AsyncSession, user_id: int, via_arnaldo: bool = False
     await db.refresh(user)
     
     logger.info(
-        f"Pedido SaaS criado: pedido_id={pedido.id}, user={user_id}, "
-        f"via_arnaldo={via_arnaldo}, novo_saldo={user.saldo_credito}"
+        f"Pedido SaaS criado (Vitalício): pedido_id={pedido.id}, user={user_id}, "
+        f"via_arnaldo={via_arnaldo}"
     )
     return pedido
 

@@ -14,7 +14,9 @@ from app.security import generate_signature
 
 # Configurações
 WEBHOOK_URL = "http://localhost:8000/webhook"
-CLIENT_SECRET = "seu_client_secret_aqui"  # Mesmo do .env
+from app.config import get_settings
+settings = get_settings()
+CLIENT_SECRET = settings.ifood_client_secret
 
 
 def create_order_placed_event():

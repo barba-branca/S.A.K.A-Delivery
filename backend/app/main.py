@@ -113,15 +113,15 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 # Registra todos os routers
-app.include_router(auth.router)
-app.include_router(orders.router)
+app.include_router(auth.router, prefix="/api")
+app.include_router(orders.router, prefix="/api")
 app.include_router(webhook.router)
-app.include_router(pacotes.router)
-app.include_router(pedidos_saas.router)
-app.include_router(repasse.router)
+app.include_router(pacotes.router, prefix="/api")
+app.include_router(pedidos_saas.router, prefix="/api")
+app.include_router(repasse.router, prefix="/api")
 app.include_router(webhook_pagamento.router)
-app.include_router(faturamento.router)
-app.include_router(payments.router)
+app.include_router(faturamento.router, prefix="/api")
+app.include_router(payments.router, prefix="/api")
 app.include_router(ws.router)
 
 

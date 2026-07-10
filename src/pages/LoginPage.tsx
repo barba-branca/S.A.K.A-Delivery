@@ -147,11 +147,7 @@ const LoginPage: React.FC = () => {
                     </button>
                 </form>
 
-                {!isRegister && (
-                    <div className="mt-4 text-center text-xs text-slate-600">
-                        <p>Demo: <span className="text-slate-400">admin/admin123</span> ou <span className="text-slate-400">cozinha/123</span></p>
-                    </div>
-                )}
+
 
                 <div className="mt-6 text-center text-xs text-slate-600">
                     <p>S.A.K.A v2.0.0 • SaaS Delivery Management</p>

@@ -38,6 +38,8 @@ def order_to_response(order: OrderModel) -> dict:
         "readyAt": to_timestamp_ms(order.ready_at),
         "deliveryAt": to_timestamp_ms(order.delivery_at),
         "deliveryFee": order.delivery_fee,
+        "subtotal": order.subtotal or 0.0,
+        "total": order.total or 0.0,
         "driverName": order.driver_name,
         "isDriverPaid": order.is_driver_paid,
     }

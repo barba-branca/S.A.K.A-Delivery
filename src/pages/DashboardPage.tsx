@@ -41,7 +41,7 @@ const DashboardPage: React.FC = () => {
                 listarPedidosAPI(5),
                 isAdmin ? getRepasseMensalAPI().catch(() => null) : Promise.resolve(null),
             ]);
-            setPedidos(pedidosData);
+            setPedidos(Array.isArray(pedidosData) ? pedidosData : []);
             setRepasse(repasseData);
             await refreshUser();
         } catch (err) {
@@ -67,6 +67,9 @@ const DashboardPage: React.FC = () => {
 
     const saldo = user?.saldoCredito || 0;
     const pedidosRestantes = Math.floor(saldo / 5);
+    
+    // Faturamento total do cliente baseado nos pedidos
+    const faturamentoCliente = pedidos.reduce((acc, curr) => acc + (Number(curr.valor_consumido) || 0), 0);
 
     // Chart data
     const chartData = {
@@ -122,18 +125,6 @@ const DashboardPage: React.FC = () => {
                     <h1 className="text-2xl font-bold text-white">Dashboard</h1>
                     <p className="text-slate-400 text-sm">Bem-vindo, {user?.fullName || user?.username} 👋</p>
                 </div>
-                <button
-                    onClick={handleComprarPacote}
-                    disabled={buyingPackage}
-                    className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                >
-                    {buyingPackage ? (
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    ) : (
-                        <Package size={18} />
-                    )}
-                    Comprar Pacote (R$5.000)
-                </button>
             </div>
 
             {/* Success message */}
@@ -144,31 +135,33 @@ const DashboardPage: React.FC = () => {
             )}
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Saldo */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 hover:border-purple-500/30 transition-colors group">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="p-2 bg-purple-500/10 rounded-lg">
-                            <Wallet size={20} className="text-purple-400" />
-                        </div>
-                        <ArrowUpRight size={16} className="text-slate-600 group-hover:text-purple-400 transition-colors" />
-                    </div>
-                    <p className="text-sm text-slate-400">Saldo Crédito</p>
-                    <p className="text-2xl font-bold text-white mt-1">
-                        R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                </div>
-
-                {/* Pedidos Restantes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Total Pedidos */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 hover:border-blue-500/30 transition-colors group">
                     <div className="flex items-center justify-between mb-3">
                         <div className="p-2 bg-blue-500/10 rounded-lg">
-                            <ShoppingBag size={20} className="text-blue-400" />
+                            <CheckCircle size={20} className="text-blue-400" />
                         </div>
                         <ArrowUpRight size={16} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
                     </div>
-                    <p className="text-sm text-slate-400">Pedidos Restantes</p>
-                    <p className="text-2xl font-bold text-white mt-1">{pedidosRestantes.toLocaleString()}</p>
+                    <p className="text-sm text-slate-400">Pedidos Realizados</p>
+                    <p className="text-2xl font-bold text-white mt-1">{pedidos.length}</p>
+                </div>
+
+                {/* Faturamento Mensal */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/30 transition-colors group">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="p-2 bg-emerald-500/10 rounded-lg">
+                            <Wallet size={20} className="text-emerald-400" />
+                        </div>
+                        <ArrowUpRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
+                    </div>
+                    <p className="text-sm text-slate-400">Faturamento Mensal</p>
+                    <p className="text-2xl font-bold text-white mt-1">
+                        R$ {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN')
+                            ? (repasse ? (Number(repasse.total_pendente || 0) + Number(repasse.total_pago || 0)) : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            : faturamentoCliente.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
                 </div>
 
                 {/* Economia Gerada - Apenas para Clientes (não admins) */}
@@ -191,18 +184,6 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </div>
                 )}
-
-                {/* Total Pedidos */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5 hover:border-emerald-500/30 transition-colors group">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="p-2 bg-emerald-500/10 rounded-lg">
-                            <CheckCircle size={20} className="text-emerald-400" />
-                        </div>
-                        <ArrowUpRight size={16} className="text-slate-600 group-hover:text-emerald-400 transition-colors" />
-                    </div>
-                    <p className="text-sm text-slate-400">Pedidos Realizados</p>
-                    <p className="text-2xl font-bold text-white mt-1">{pedidos.length}</p>
-                </div>
             </div>
 
             {/* Bottom section: recent orders + chart */}
@@ -220,24 +201,19 @@ const DashboardPage: React.FC = () => {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {pedidos.map((p) => (
+                            {Array.isArray(pedidos) && pedidos.map((p) => (
                                 <div key={p.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg hover:bg-slate-800 transition-colors">
                                     <div className="flex items-center gap-3">
                                         <div className={`w-2 h-2 rounded-full ${p.status === 'ATIVO' ? 'bg-emerald-400' : 'bg-slate-500'}`}></div>
                                         <div>
                                             <p className="text-sm font-medium text-white">Pedido #{p.id}</p>
                                             <p className="text-xs text-slate-500">
-                                                {new Date(p.data).toLocaleDateString('pt-BR')} •{' '}
-                                                {(user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN') ? (
-                                                    p.via_arnaldo && <span className="text-purple-400">S.A.K.A. Express</span>
-                                                ) : (
-                                                    <span className="text-purple-400">Entrega Inteligente AI</span>
-                                                )}
+                                                {new Date(p.data).toLocaleDateString('pt-BR')} às {new Date(p.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>
                                     </div>
-                                    <span className="text-sm font-medium text-white">
-                                        R$ {p.valor_consumido.toFixed(2)}
+                                    <span className="text-sm font-semibold text-purple-400">
+                                        R$ {Number(p.valor_consumido || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             ))}

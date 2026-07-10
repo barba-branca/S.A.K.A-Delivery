@@ -19,8 +19,6 @@ const PedidosPage: React.FC = () => {
     const [pedidos, setPedidos] = useState<PedidoItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [creating, setCreating] = useState(false);
-    const [viaArnaldo, setViaArnaldo] = useState(false);
-    const [showModal, setShowModal] = useState(false);
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
 
@@ -42,16 +40,16 @@ const PedidosPage: React.FC = () => {
     const handleCriarPedido = async () => {
         setCreating(true);
         setErrorMsg('');
+        setSuccessMsg('');
         try {
-            await criarPedidoAPI(viaArnaldo);
+            await criarPedidoAPI(false);
             setSuccessMsg('Pedido criado com sucesso! 🎉');
-            setShowModal(false);
-            setViaArnaldo(false);
             await loadPedidos();
             await refreshUser();
             setTimeout(() => setSuccessMsg(''), 3000);
         } catch (err: any) {
             setErrorMsg(err.response?.data?.detail || 'Erro ao criar pedido');
+            setTimeout(() => setErrorMsg(''), 4000);
         } finally {
             setCreating(false);
         }
@@ -90,11 +88,16 @@ const PedidosPage: React.FC = () => {
                     <p className="text-slate-400 text-sm">{pedidos.length} pedidos realizados</p>
                 </div>
                 <button
-                    onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-purple-500/20"
+                    onClick={handleCriarPedido}
+                    disabled={creating}
+                    className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-purple-500/20 disabled:opacity-50"
                 >
-                    <Plus size={18} />
-                    Novo Pedido
+                    {creating ? (
+                        <div className="w-4.5 h-4.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                        <Plus size={18} />
+                    )}
+                    {creating ? 'Criando...' : 'Novo Pedido'}
                 </button>
             </div>
 
@@ -118,11 +121,6 @@ const PedidosPage: React.FC = () => {
                             <tr className="border-b border-slate-800">
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">ID</th>
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Valor</th>
-                                {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
-                                    <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Logística (S.A.K.A. Express / Interno)</th>
-                                ) : (
-                                    <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Logística</th>
-                                )}
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Data</th>
                                 <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-5 py-3">Status</th>
                             </tr>
@@ -130,7 +128,7 @@ const PedidosPage: React.FC = () => {
                         <tbody className="divide-y divide-slate-800/50">
                             {pedidos.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-12 text-slate-500">
+                                    <td colSpan={4} className="text-center py-12 text-slate-500">
                                         <AlertCircle className="mx-auto mb-2" size={28} />
                                         <p>Nenhum pedido encontrado</p>
                                         <p className="text-xs mt-1">Clique em "Novo Pedido" para começar</p>
@@ -143,20 +141,9 @@ const PedidosPage: React.FC = () => {
                                             <span className="text-sm font-medium text-white">#{p.id}</span>
                                         </td>
                                         <td className="px-5 py-3">
-                                            <span className="text-sm text-white">R$ {p.valor_consumido.toFixed(2)}</span>
-                                        </td>
-                                        <td className="px-5 py-3">
-                                            {user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' ? (
-                                                p.via_arnaldo ? (
-                                                    <span className="flex items-center gap-1 text-purple-400 text-sm">
-                                                        <User size={14} /> S.A.K.A. Express
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-slate-500 text-sm">Própria</span>
-                                                )
-                                            ) : (
-                                                <span className="text-slate-300 text-sm">Integrada (S.A.K.A. Express)</span>
-                                            )}
+                                            <span className="text-sm font-semibold text-purple-400">
+                                                R$ {Number(p.valor_consumido || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
                                         </td>
                                         <td className="px-5 py-3">
                                             <span className="text-sm text-slate-300">
@@ -172,56 +159,6 @@ const PedidosPage: React.FC = () => {
                     </table>
                 </div>
             </div>
-
-            {/* Modal: Novo Pedido */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                        <h2 className="text-xl font-bold text-white mb-4">Novo Pedido</h2>
-                        <p className="text-slate-400 text-sm mb-6">
-                            Cada pedido consome <strong className="text-white">R$5.00</strong> do seu saldo.
-                        </p>
-
-                        <div className="mb-6">
-                            <label className="flex items-center gap-3 cursor-pointer group">
-                                <input
-                                    type="checkbox"
-                                    checked={viaArnaldo}
-                                    onChange={(e) => setViaArnaldo(e.target.checked)}
-                                    className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-purple-500 focus:ring-purple-500"
-                                />
-                                <div>
-                                    <span className="text-white text-sm font-medium group-hover:text-purple-300 transition-colors">
-                                        Solicitar Entrega Inteligente S.A.K.A.
-                                    </span>
-                                </div>
-                            </label>
-                        </div>
-
-                        {errorMsg && (
-                            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
-                                {errorMsg}
-                            </div>
-                        )}
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => { setShowModal(false); setErrorMsg(''); }}
-                                className="flex-1 px-4 py-2.5 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleCriarPedido}
-                                disabled={creating}
-                                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 transition-all font-medium disabled:opacity-50"
-                            >
-                                {creating ? 'Criando...' : 'Criar Pedido'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

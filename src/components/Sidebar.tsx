@@ -20,7 +20,6 @@ const Sidebar: React.FC = () => {
         { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/pedidos', label: 'Pedidos', icon: ShoppingBag },
         { to: '/kds', label: 'KDS', icon: ChefHat },
-        { to: '/faturamento', label: 'Minha Carteira', icon: CreditCard },
         ...(isAdmin ? [{ to: '/admin', label: 'Admin', icon: Shield }] : []),
     ];
 
@@ -58,16 +57,6 @@ const Sidebar: React.FC = () => {
 
             {/* User section */}
             <div className="p-3 border-t border-slate-800">
-                {/* Saldo mini card */}
-                <div className="mb-3 p-3 bg-slate-800/50 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Wallet size={14} className="text-purple-400" />
-                        <span className="text-xs text-slate-400">Saldo</span>
-                    </div>
-                    <p className="text-sm font-bold text-white">
-                        R$ {(user?.saldoCredito || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                </div>
 
                 {/* User info + logout */}
                 <div className="flex items-center justify-between">
